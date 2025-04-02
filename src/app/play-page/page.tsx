@@ -25,7 +25,7 @@ interface Ticket {
   md5: string;
   tierId: string;
   playerId: string;
-  matchTilesToWin: number;
+  matchingTilesToWin: number;
 }
 
 interface ValidationResult {
@@ -256,7 +256,7 @@ export default function PlayPage() {
       md5: "d41d8cd98f00b204e9800998ecf8427e", // Sample MD5 hash
       tierId: "tier-" + Math.floor(Math.random() * 5),
       playerId: "player-" + Math.floor(Math.random() * 1000),
-      matchTilesToWin: 3,
+      matchingTilesToWin: 3,
     };
   };
 
@@ -286,7 +286,7 @@ export default function PlayPage() {
         body: JSON.stringify({
           revealedNumbers,
           ticketId: ticketData?.id || null,
-          matchTilesToWin: ticketData?.matchTilesToWin || 3,
+          matchingTilesToWin: ticketData?.matchingTilesToWin || 3,
         }),
       });
 
