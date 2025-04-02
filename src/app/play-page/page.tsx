@@ -424,6 +424,34 @@ export default function PlayPage() {
     setGridKey(`grid-${Date.now()}`);
   };
 
+  useEffect(() => {
+    // Prevent scrolling when notifications are shown
+    if (notificationState !== "none") {
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.top = `-${window.scrollY}px`;
+    } else {
+      // Re-enable scrolling when notifications are hidden
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || "0", 10) * -1);
+      }
+    }
+    
+    return () => {
+      // Cleanup when component unmounts
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+    };
+  }, [notificationState]);
+
   if (loading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-8">
