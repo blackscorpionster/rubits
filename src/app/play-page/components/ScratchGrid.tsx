@@ -128,7 +128,8 @@ export const ScratchGrid: React.FC<ScratchGridProps> = ({
         aspectRatio: `444 / 666`,
         maxWidth: "444px",
         borderRadius: "1rem",
-        overflow: "hidden"
+        overflow: "hidden",
+        cursor: "url('/assets/coin.cur'), auto"
       }}
       onMouseDown={handleGridMouseDown}
       onMouseMove={handleGridMouseMove}
