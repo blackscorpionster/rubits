@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ScratchGrid } from "./components";
+import { useRouter } from "next/navigation";
 
 interface GridItem {
   id: string;
@@ -40,6 +41,24 @@ export default function PlayPage() {
   const [validationResult, setValidationResult] =
     useState<ValidationResult | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [email, setEmail] = useState<string | null>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    const userEmail = localStorage.getItem("userEmail")
+
+    if (!userEmail) {
+      router.push("/")
+      return
+    }
+
+    setEmail(userEmail)
+  }, [router])
+
+  const handleLogout = () => {
+    localStorage.removeItem("userEmail")
+    router.push("/")
+  }
 
   // Fetch ticket data from the API - using mock data for now
   useEffect(() => {
@@ -264,6 +283,15 @@ export default function PlayPage() {
                 Play Again
               </button>
             )}
+          </div>
+
+          <div className="mt-8">
+            <button
+              onClick={handleLogout}
+              className="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            >
+              Logout
+            </button>
           </div>
         </div>
       </div>
