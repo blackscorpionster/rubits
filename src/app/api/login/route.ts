@@ -6,6 +6,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");
 
+    if (!email) {
+        return NextResponse.json({ message: "Email is required" }, { status: 400 });
+    }
+
     // this should be findUnique, but email is not unique in DB schema and cbf changing :)
     const player = await prisma.player.findFirst({
         where: {
