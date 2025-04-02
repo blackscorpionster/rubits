@@ -15,17 +15,29 @@ interface GridItem {
   value: number;
 }
 
-interface Ticket {
+interface Draw {
   id: string;
   name: string;
+  numberOfTickets: number;
+  ticketCost: number;
+  profitPercent: number;
   gridSizeX: number;
   gridSizeY: number;
-  drawId: string;
-  gridElements: GridItem[];
-  md5: string;
-  tierId: string;
-  playerId: string;
   matchingTilesToWin: number;
+  tilesTheme: string;
+}
+
+interface Ticket {
+  id: string;
+  drawId: string;
+  gridElements: number[];
+  md5: string;
+  status: string;
+  tierId: string;
+  position: number;
+  dateCreated: string;
+  purchasedBy: string | null;
+  draw: Draw;
 }
 
 interface ValidationResult {
@@ -237,27 +249,30 @@ export default function PlayPage() {
     router.push("/");
   };
 
-  // Fetch ticket data from the API - using mock data for now
+  // Fetch ticket data from the real database API
   useEffect(() => {
     const fetchTicketData = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/get-ticket");
-        const result = await response.json();
+        const response = await fetch("/api/ticket");
+        const ticket = await response.json();
 
-        if (result.success) {
-          // setTicketData(result.data);
-          setGridData(result.data.gridElements);
+        if (ticket) {
+          setTicketData(ticket);
+          
+          // Convert the array of numbers to the GridItem format needed by the ScratchGrid
+          const formattedGridData = createGridDataFromArray(
+            ticket.gridElements,
+            ticket.draw.gridSizeX,
+            ticket.draw.gridSizeY
+          );
+          setGridData(formattedGridData);
         } else {
-          setError(result.message || "Failed to fetch ticket data");
-          const mockData = getMockGridData();
-          setGridData(mockData);
+          setError("No ticket found");
         }
       } catch (err) {
         console.error("Error fetching ticket data:", err);
         setError("Error connecting to server");
-        const mockData = getMockGridData();
-        setGridData(mockData);
       } finally {
         setLoading(false);
       }
@@ -266,49 +281,20 @@ export default function PlayPage() {
     fetchTicketData();
   }, []);
 
-  // Mock grid data for fallback
-  const getMockGridData = (): GridItem[] => {
-    const winningSet = [
-      { id: "0-0", value: 7 },
-      { id: "0-1", value: 3 },
-      { id: "0-2", value: 8 },
-      { id: "1-0", value: 7 },
-      { id: "1-1", value: 5 },
-      { id: "1-2", value: 2 },
-      { id: "2-0", value: 7 },
-      { id: "2-1", value: 4 },
-      { id: "2-2", value: 9 },
-    ];
-
-    const regularSet = [
-      { id: "0-0", value: 5 },
-      { id: "0-1", value: 9 },
-      { id: "0-2", value: 2 },
-      { id: "1-0", value: 3 },
-      { id: "1-1", value: 1 },
-      { id: "1-2", value: 8 },
-      { id: "2-0", value: 6 },
-      { id: "2-1", value: 4 },
-      { id: "2-2", value: 7 },
-    ];
-
-    return Math.random() > 0.5 ? winningSet : regularSet;
-  };
-
-  // Mock ticket
-  const getMockTicket = (): Ticket => {
-    return {
-      id: "ticket-" + Math.floor(Math.random() * 1000),
-      name: "Sample Ticket",
-      gridSizeX: 3,
-      gridSizeY: 3,
-      drawId: "draw-" + Math.floor(Math.random() * 100),
-      gridElements: getMockGridData(),
-      md5: "d41d8cd98f00b204e9800998ecf8427e", // Sample MD5 hash
-      tierId: "tier-" + Math.floor(Math.random() * 5),
-      playerId: "player-" + Math.floor(Math.random() * 1000),
-      matchingTilesToWin: 3,
-    };
+  // Convert the array of numbers to the format needed by the ScratchGrid
+  const createGridDataFromArray = (
+    gridElements: number[], 
+    gridSizeX: number, 
+    gridSizeY: number
+  ): GridItem[] => {
+    return gridElements.map((value, index) => {
+      const row = Math.floor(index / gridSizeX);
+      const col = index % gridSizeX;
+      return {
+        id: `${row}-${col}`,
+        value,
+      };
+    });
   };
 
   const handleNumberRevealed = (id: string, value: number) => {
@@ -337,7 +323,7 @@ export default function PlayPage() {
         body: JSON.stringify({
           revealedNumbers,
           ticketId: ticketData?.id || null,
-          matchingTilesToWin: ticketData?.matchingTilesToWin || 3,
+          matchingTilesToWin: ticketData?.draw.matchingTilesToWin || 3,
         }),
       });
 
@@ -374,12 +360,33 @@ export default function PlayPage() {
   const resetGame = () => {
     setRevealedNumbers({});
     setValidationResult(null);
-    setShowWinningAlert(false);
-    setShowLosingAlert(false);
-    setShowReadyToReveal(false);
-    const mockTicket = getMockTicket();
-    // setTicketData(mockTicket);
-    setGridData(mockTicket.gridElements);
+    // Fetch a new ticket from the database
+    const fetchNewTicket = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch("/api/ticket");
+        const ticket = await response.json();
+        
+        if (ticket) {
+          setTicketData(ticket);
+          const formattedGridData = createGridDataFromArray(
+            ticket.gridElements,
+            ticket.draw.gridSizeX,
+            ticket.draw.gridSizeY
+          );
+          setGridData(formattedGridData);
+        } else {
+          setError("No ticket found");
+        }
+      } catch (err) {
+        console.error("Error fetching new ticket:", err);
+        setError("Failed to get a new ticket");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchNewTicket();
     setGridKey(`grid-${Date.now()}`);
   };
 
@@ -438,14 +445,14 @@ export default function PlayPage() {
         </h1>
 
         {error && (
-          <p className="text-red-500 mb-4">{error} (using fallback data)</p>
+          <p className="text-red-500 mb-4">{error}</p>
         )}
 
         {!ticketData && <NoTickets />}
 
         {ticketData && (
           <div className="text-center">
-            <h2 className="text-xl font-semibold">{ticketData.name}</h2>
+            <h2 className="text-xl font-semibold">{ticketData.draw.name}</h2>
             <p className="text-sm text-gray-600">Ticket ID: {ticketData.id}</p>
             <p className="text-sm text-gray-600">Draw: {ticketData.drawId}</p>
           </div>
