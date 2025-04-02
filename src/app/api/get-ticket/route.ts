@@ -15,6 +15,7 @@ export interface Ticket {
   md5: string;
   tierId: string;
   playerId: string;
+  matchTilesToWin: number;
 }
 
 // Create a winning ticket with 3 of the same number in a row
@@ -50,6 +51,7 @@ const getWinningTicket = (): Ticket => {
     md5: "d41d8cd98f00b204e9800998ecf8427e", // Sample MD5 hash
     tierId: "tier-win",
     playerId: "player-" + Math.floor(Math.random() * 1000),
+    matchTilesToWin: 3,
   };
 };
 
@@ -92,6 +94,7 @@ const getLosingTicket = (): Ticket => {
     md5: "d41d8cd98f00b204e9800998ecf8427e", // Sample MD5 hash
     tierId: "tier-lose",
     playerId: "player-" + Math.floor(Math.random() * 1000),
+    matchTilesToWin: 3,
   };
 };
 
