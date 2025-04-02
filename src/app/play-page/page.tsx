@@ -29,6 +29,35 @@ interface ValidationResult {
   message?: string;
 }
 
+const Notification = ({
+  message,
+  onClose,
+}: {
+  message: string;
+  onClose: () => void;
+}) => {
+  useEffect(() => {
+    // Auto-dismiss after 3 seconds
+    const timer = setTimeout(() => {
+      onClose();
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2">
+      <div>{message}</div>
+      <button
+        className="ml-4 bg-blue-600 hover:bg-blue-700 rounded-full h-6 w-6 flex items-center justify-center focus:outline-none"
+        onClick={onClose}
+      >
+        ×
+      </button>
+    </div>
+  );
+};
+
 // TODO: Add an image generated from AI here? Hamish on it...
 export default function PlayPage() {
   const [revealedNumbers, setRevealedNumbers] = useState<
@@ -41,6 +70,8 @@ export default function PlayPage() {
   const [validationResult, setValidationResult] =
     useState<ValidationResult | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [notification, setNotification] = useState<string | null>(null);
+  const [gridKey, setGridKey] = useState<string>("initial");
   const [email, setEmail] = useState<string | null>(null)
   const router = useRouter()
 
@@ -141,7 +172,7 @@ export default function PlayPage() {
       };
 
       if (Object.keys(newRevealedNumbers).length === gridData.length) {
-        alert("All numbers revealed! Ready to check for a win!");
+        setNotification("All numbers revealed! Ready to check for a win!");
       }
 
       return newRevealedNumbers;
@@ -183,6 +214,7 @@ export default function PlayPage() {
     const mockTicket = getMockTicket();
     setTicketData(mockTicket);
     setGridData(mockTicket.gridElements);
+    setGridKey(`grid-${Date.now()}`);
   };
 
   if (loading) {
@@ -209,6 +241,13 @@ export default function PlayPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-8">
+      {notification && (
+        <Notification
+          message={notification}
+          onClose={() => setNotification(null)}
+        />
+      )}
+
       <div className="z-10 max-w-5xl w-full flex flex-col items-center gap-8">
         <h1 className="text-3xl font-bold">Scratch-It Game</h1>
 
@@ -217,7 +256,7 @@ export default function PlayPage() {
         )}
 
         {ticketData && (
-          <div className="mb-4 text-center">
+          <div className="text-center">
             <h2 className="text-xl font-semibold">{ticketData.name}</h2>
             <p className="text-sm text-gray-600">Ticket ID: {ticketData.id}</p>
             <p className="text-sm text-gray-600">Draw: {ticketData.drawId}</p>
@@ -225,11 +264,12 @@ export default function PlayPage() {
         )}
 
         <ScratchGrid
+          key={gridKey}
           gridData={gridData}
           onNumberRevealed={handleNumberRevealed}
         />
 
-        <div className="mt-8 w-full max-w-md">
+        <div className="w-full max-w-md">
           <p className="mb-4 text-center">
             Scratch away to reveal the numbers!
           </p>
