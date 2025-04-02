@@ -8,15 +8,23 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        lacquer: ["var(--font-lacquer)"],
+      },
       animation: {
         "bounce-slow": "bounce 1.5s infinite",
         "spin-slow": "spin 5s linear infinite",
         "spin-slow-reverse": "spin-reverse 5s linear infinite",
         "pulse-fast": "pulse 0.7s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "fadeIn": "fadeIn 0.3s ease-in-out",
       },
       keyframes: {
         "spin-reverse": {
           to: { transform: "rotate(-360deg)" },
+        },
+        "fadeIn": {
+          "0%": { opacity: "0", transform: "translateY(-10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
       },
       backgroundImage: {

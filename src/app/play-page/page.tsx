@@ -36,35 +36,6 @@ interface ValidationResult {
   message?: string;
 }
 
-const Notification = ({
-  message,
-  onClose,
-}: {
-  message: string;
-  onClose: () => void;
-}) => {
-  useEffect(() => {
-    // Auto-dismiss after 3 seconds
-    const timer = setTimeout(() => {
-      onClose();
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  return (
-    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2">
-      <div>{message}</div>
-      <button
-        className="ml-4 bg-blue-600 hover:bg-blue-700 rounded-full h-6 w-6 flex items-center justify-center focus:outline-none"
-        onClick={onClose}
-      >
-        ×
-      </button>
-    </div>
-  );
-};
-
 // Winning notification with animation
 const WinningNotification = ({
   prize,
@@ -152,6 +123,84 @@ const WinningNotification = ({
   );
 };
 
+// Ready to reveal notification
+const ReadyToReveal = ({ onReveal }: { onReveal: () => void }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onReveal();
+    }, 3000); // Auto continue after 3 seconds
+
+    return () => clearTimeout(timer);
+  }, [onReveal]);
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+      <div className="relative">
+        <div className="bg-gradient-to-r from-purple-400 via-blue-500 to-indigo-500 text-white font-bold text-2xl md:text-4xl px-8 py-6 rounded-xl shadow-2xl border-4 border-indigo-300 transform -rotate-1 scale-100 animate-pulse">
+          <div className="text-center mb-4">✨ All Revealed! ✨</div>
+          <div className="text-center text-indigo-100 font-bold">
+            Ready to see if you won?
+          </div>
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={onReveal}
+              className="bg-white text-indigo-600 hover:bg-indigo-100 text-xl font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
+            >
+              Reveal Now!
+            </button>
+          </div>
+        </div>
+        <div className="absolute -top-6 -left-6 animate-spin-slow">
+          <div className="text-indigo-300 text-5xl">✨</div>
+        </div>
+        <div className="absolute -bottom-6 -right-6 animate-spin-slow-reverse">
+          <div className="text-indigo-300 text-5xl">🔮</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Better luck next time notification
+const BetterLuckNextTime = ({ onClose }: { onClose: () => void }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 5000); // Auto close after 5 seconds
+
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+      <div className="relative">
+        <div className="bg-gradient-to-r from-blue-400 via-purple-500 to-indigo-500 text-white font-bold text-2xl md:text-4xl px-8 py-6 rounded-xl shadow-2xl border-4 border-blue-300 transform rotate-1 scale-100">
+          <div className="text-center mb-4">🎮 Not a Winner 🎮</div>
+          <div className="text-center text-blue-100 font-bold">
+            Better luck next time!
+          </div>
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={onClose}
+              className="bg-white text-purple-600 hover:bg-purple-100 text-xl font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+        <div className="absolute -top-6 -right-6 animate-bounce-slow">
+          <div className="text-blue-300 text-5xl">🍀</div>
+        </div>
+        <div className="absolute -bottom-6 -left-6 animate-bounce-slow delay-150">
+          <div className="text-blue-300 text-5xl">🎲</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // TODO: Add an image generated from AI here? Hamish on it...
 export default function PlayPage() {
   const [revealedNumbers, setRevealedNumbers] = useState<
@@ -166,6 +215,8 @@ export default function PlayPage() {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [notification, setNotification] = useState<string | null>(null);
   const [showWinningAlert, setShowWinningAlert] = useState(false);
+  const [showLosingAlert, setShowLosingAlert] = useState(false);
+  const [showReadyToReveal, setShowReadyToReveal] = useState(false);
   const [gridKey, setGridKey] = useState<string>("initial");
   const [email, setEmail] = useState<string | null>(null);
   const router = useRouter();
@@ -268,7 +319,7 @@ export default function PlayPage() {
       };
 
       if (Object.keys(newRevealedNumbers).length === gridData.length) {
-        setNotification("All numbers revealed! Ready to check for a win!");
+        setShowReadyToReveal(true);
       }
 
       return newRevealedNumbers;
@@ -294,14 +345,17 @@ export default function PlayPage() {
 
       setValidationResult(result);
 
-      if (result.success && result.won) {
+      if (result.success) {
         setNotification("Checking your ticket...");
 
         setTimeout(() => {
           setNotification(null);
-          setShowWinningAlert(true);
-
-          playWinSound();
+          if (result.won) {
+            setShowWinningAlert(true);
+            playWinSound();
+          } else {
+            setShowLosingAlert(true);
+          }
         }, 1500);
       }
 
@@ -321,6 +375,8 @@ export default function PlayPage() {
     setRevealedNumbers({});
     setValidationResult(null);
     setShowWinningAlert(false);
+    setShowLosingAlert(false);
+    setShowReadyToReveal(false);
     const mockTicket = getMockTicket();
     // setTicketData(mockTicket);
     setGridData(mockTicket.gridElements);
@@ -351,13 +407,6 @@ export default function PlayPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-8">
-      {notification && (
-        <Notification
-          message={notification}
-          onClose={() => setNotification(null)}
-        />
-      )}
-
       {showWinningAlert && validationResult?.prize && (
         <WinningNotification
           prize={validationResult.prize}
@@ -365,8 +414,28 @@ export default function PlayPage() {
         />
       )}
 
+      {showLosingAlert && (
+        <BetterLuckNextTime
+          onClose={() => {
+            setShowLosingAlert(false);
+            resetGame();
+          }}
+        />
+      )}
+
+      {showReadyToReveal && (
+        <ReadyToReveal
+          onReveal={() => {
+            setShowReadyToReveal(false);
+            handleValidate();
+          }}
+        />
+      )}
+
       <div className="z-10 max-w-5xl w-full flex flex-col items-center gap-8">
-        <h1 className="text-3xl font-bold">Scratch-It Game</h1>
+        <h1 className="font-lacquer text-4xl md:text-5xl font-normal text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 transform rotate-1 tracking-wider shadow-lg">
+          Rub-o-Rama
+        </h1>
 
         {error && (
           <p className="text-red-500 mb-4">{error} (using fallback data)</p>
@@ -397,27 +466,9 @@ export default function PlayPage() {
             revealed
           </p>
 
-          {validationResult && (
-            <div
-              className={`mb-6 p-4 rounded-lg text-center ${
-                validationResult.won ? "bg-green-100" : "bg-gray-100"
-              }`}
-            >
-              {validationResult.success ? (
-                <>
-                  {validationResult.won ? (
-                    <div className="text-green-700 font-bold text-xl">
-                      {validationResult.prize}
-                    </div>
-                  ) : (
-                    <div className="text-gray-700">
-                      Sorry, no win this time. Try again!
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-red-500">{validationResult.message}</div>
-              )}
+          {notification && (
+            <div className="mb-6 p-4 bg-blue-100 rounded-lg text-center text-blue-700">
+              {notification}
             </div>
           )}
 
@@ -428,7 +479,8 @@ export default function PlayPage() {
               disabled={
                 Object.keys(revealedNumbers).length === 0 ||
                 submitting ||
-                validationResult !== null
+                validationResult !== null ||
+                showReadyToReveal
               }
             >
               {submitting ? "Validating..." : "Validate Now"}
