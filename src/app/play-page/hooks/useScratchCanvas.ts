@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect } from 'react';
-import { CanvasPosition, ScratchCanvasProps, CanvasRefType } from './types';
+import { useRef, useState, useEffect } from "react";
+import { CanvasPosition, ScratchCanvasProps, CanvasRefType } from "./types";
 
 export const useScratchCanvas = ({
   revealThreshold,
@@ -10,14 +10,12 @@ export const useScratchCanvas = ({
   const [isRevealed, setIsRevealed] = useState(false);
   const [percentScratched, setPercentScratched] = useState(0);
   const [canvasInitialized, setCanvasInitialized] = useState(false);
-  
-  // Track scratch area using a grid
-  const gridSize = 20; // Number of cells in each dimension for tracking
+
+  const gridSize = 20;
   const scratchGrid = useRef<boolean[][]>([]);
   const lastPosition = useRef<CanvasPosition>({ x: 0, y: 0 });
   const isDrawing = useRef(false);
 
-  // Initialize the canvas and set up the scratch overlay
   const initCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -33,13 +31,12 @@ export const useScratchCanvas = ({
     setPercentScratched(0);
     setIsRevealed(false);
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Use the scratch overlay color
-    ctx.fillStyle = "#5253aa";
+    ctx.fillStyle = "rgba(227, 61, 148, 1)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.globalCompositeOperation = "destination-out";
@@ -47,7 +44,6 @@ export const useScratchCanvas = ({
     setCanvasInitialized(true);
   };
 
-  // Update which areas have been scratched based on a point
   const updateScratchedArea = (centerX: number, centerY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -104,15 +100,13 @@ export const useScratchCanvas = ({
     }
   };
 
-  // Draw a scratch line between two points
   const drawScratchLine = (from: CanvasPosition, to: CanvasPosition) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Draw scratch line
     ctx.lineWidth = scratchRadius * 2;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -122,25 +116,21 @@ export const useScratchCanvas = ({
     ctx.lineTo(to.x, to.y);
     ctx.stroke();
 
-    // Calculate distance between points
     const dx = to.x - from.x;
     const dy = to.y - from.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Add points along the line with distance-based sampling
     if (distance > 0) {
       const steps = Math.max(1, Math.floor(distance / (scratchRadius / 2)));
       for (let i = 0; i <= steps; i++) {
         const pointX = from.x + (dx * i) / steps;
         const pointY = from.y + (dy * i) / steps;
 
-        // Update scratched area at each point
         updateScratchedArea(pointX, pointY);
       }
     }
   };
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       initCanvas();
@@ -153,7 +143,6 @@ export const useScratchCanvas = ({
     };
   }, []);
 
-  // Initialize canvas
   useEffect(() => {
     initCanvas();
   }, []);
@@ -169,4 +158,4 @@ export const useScratchCanvas = ({
     updateScratchedArea,
     drawScratchLine,
   };
-}; 
+};

@@ -5,7 +5,7 @@ import {
   ScratchCellRef,
   useScratchCanvas,
   useEventHandlers,
-  useExternalDrawingControl
+  useExternalDrawingControl,
 } from "../hooks";
 
 interface ScratchCellProps {
@@ -31,11 +31,9 @@ export const ScratchCell = forwardRef<ScratchCellRef, ScratchCellProps>(
     },
     ref
   ) => {
-    // Constants
     const scratchRadius = 15; // Radius of the scratch "finger" in pixels
     const revealThreshold = 50; // Percentage threshold to reveal the number
 
-    // Use custom hooks for canvas, events, and external drawing control
     const {
       canvasRef,
       isRevealed,
@@ -43,11 +41,11 @@ export const ScratchCell = forwardRef<ScratchCellRef, ScratchCellProps>(
       isDrawing,
       lastPosition,
       updateScratchedArea,
-      drawScratchLine
+      drawScratchLine,
     } = useScratchCanvas({
       revealThreshold,
       onRevealed,
-      scratchRadius
+      scratchRadius,
     });
 
     const { startDrawing, draw, stopDrawing } = useEventHandlers({
@@ -56,7 +54,7 @@ export const ScratchCell = forwardRef<ScratchCellRef, ScratchCellProps>(
       lastPosition,
       updateScratchedArea,
       drawScratchLine,
-      externalDrawing
+      externalDrawing,
     });
 
     useExternalDrawingControl({
@@ -65,7 +63,7 @@ export const ScratchCell = forwardRef<ScratchCellRef, ScratchCellProps>(
       isDrawing,
       lastPosition,
       updateScratchedArea,
-      drawScratchLine
+      drawScratchLine,
     });
 
     return (
