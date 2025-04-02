@@ -1,8 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { ScratchGrid } from "./components";
+import React, { useState, useEffect, useRef } from "react";
+import { BuyTickets, NoTickets, ScratchGrid } from "./components";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { playWinSound } from "../../utils/audioUtils";
+
+const ReactConfetti = dynamic(() => import("react-confetti"), {
+  ssr: false,
+});
 
 interface GridItem {
   id: string;
@@ -19,6 +25,7 @@ interface Ticket {
   md5: string;
   tierId: string;
   playerId: string;
+  matchTilesToWin: number;
 }
 
 interface ValidationResult {
@@ -58,6 +65,93 @@ const Notification = ({
   );
 };
 
+// Winning notification with animation
+const WinningNotification = ({
+  prize,
+  onClose,
+}: {
+  prize: string;
+  onClose: () => void;
+}) => {
+  const [windowDimensions, setWindowDimensions] = useState({
+    width: typeof window !== "undefined" ? window.innerWidth : 0,
+    height: typeof window !== "undefined" ? window.innerHeight : 0,
+  });
+  const [confettiActive, setConfettiActive] = useState(true);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    // Try playing the sound again when the component mounts
+    // This is a backup in case the first attempt failed
+    setTimeout(() => playWinSound(), 200);
+
+    const timer = setTimeout(() => {
+      setConfettiActive(false);
+      setTimeout(onClose, 500);
+    }, 8000);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timer);
+    };
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      {confettiActive && (
+        <ReactConfetti
+          width={windowDimensions.width}
+          height={windowDimensions.height}
+          recycle={true}
+          numberOfPieces={500}
+          gravity={0.15}
+          colors={["#FFD700", "#FFA500", "#FF4500", "#FF1493", "#9400D3"]}
+        />
+      )}
+      <div className="absolute inset-0 bg-black bg-opacity-50 animate-pulse"></div>
+      <div className="relative">
+        <div className="animate-bounce-slow bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 text-white font-bold text-4xl md:text-6xl px-10 py-8 rounded-xl shadow-2xl border-4 border-yellow-300 transform rotate-2 scale-100">
+          <div className="animate-pulse mb-4 text-center">🎉 WINNER! 🎉</div>
+          <div className="text-center text-yellow-300 font-extrabold animate-pulse drop-shadow-lg">
+            {prize}
+          </div>
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={() => {
+                playWinSound();
+                onClose();
+              }}
+              className="bg-white text-pink-600 hover:bg-yellow-200 text-xl font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
+            >
+              AWESOME!
+            </button>
+          </div>
+        </div>
+        <div className="absolute -top-8 -left-8 animate-spin-slow">
+          <div className="text-yellow-300 text-6xl">🌟</div>
+        </div>
+        <div className="absolute -bottom-8 -right-8 animate-spin-slow-reverse">
+          <div className="text-yellow-300 text-6xl">💰</div>
+        </div>
+        <div className="absolute top-1/4 -right-10 animate-bounce-slow delay-300">
+          <div className="text-yellow-300 text-5xl">🎊</div>
+        </div>
+        <div className="absolute bottom-1/4 -left-10 animate-bounce-slow delay-150">
+          <div className="text-yellow-300 text-5xl">🎊</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // TODO: Add an image generated from AI here? Hamish on it...
 export default function PlayPage() {
   const [revealedNumbers, setRevealedNumbers] = useState<
@@ -71,25 +165,26 @@ export default function PlayPage() {
     useState<ValidationResult | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [notification, setNotification] = useState<string | null>(null);
+  const [showWinningAlert, setShowWinningAlert] = useState(false);
   const [gridKey, setGridKey] = useState<string>("initial");
-  const [email, setEmail] = useState<string | null>(null)
-  const router = useRouter()
+  const [email, setEmail] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    const userEmail = localStorage.getItem("userEmail")
+    const userEmail = localStorage.getItem("userEmail");
 
     if (!userEmail) {
-      router.push("/")
-      return
+      router.push("/");
+      return;
     }
 
-    setEmail(userEmail)
-  }, [router])
+    setEmail(userEmail);
+  }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("userEmail")
-    router.push("/")
-  }
+    localStorage.removeItem("userEmail");
+    router.push("/");
+  };
 
   // Fetch ticket data from the API - using mock data for now
   useEffect(() => {
@@ -100,7 +195,7 @@ export default function PlayPage() {
         const result = await response.json();
 
         if (result.success) {
-          setTicketData(result.data);
+          // setTicketData(result.data);
           setGridData(result.data.gridElements);
         } else {
           setError(result.message || "Failed to fetch ticket data");
@@ -146,7 +241,7 @@ export default function PlayPage() {
       { id: "2-2", value: 7 },
     ];
 
-    return Math.random() > 0.5 ? winningSet : regularSet; // 50% chance of winning set being returned
+    return Math.random() > 0.5 ? winningSet : regularSet;
   };
 
   // Mock ticket
@@ -161,6 +256,7 @@ export default function PlayPage() {
       md5: "d41d8cd98f00b204e9800998ecf8427e", // Sample MD5 hash
       tierId: "tier-" + Math.floor(Math.random() * 5),
       playerId: "player-" + Math.floor(Math.random() * 1000),
+      matchTilesToWin: 3,
     };
   };
 
@@ -190,11 +286,24 @@ export default function PlayPage() {
         body: JSON.stringify({
           revealedNumbers,
           ticketId: ticketData?.id || null,
+          matchTilesToWin: ticketData?.matchTilesToWin || 3,
         }),
       });
 
       const result = await response.json();
+
       setValidationResult(result);
+
+      if (result.success && result.won) {
+        setNotification("Checking your ticket...");
+
+        setTimeout(() => {
+          setNotification(null);
+          setShowWinningAlert(true);
+
+          playWinSound();
+        }, 1500);
+      }
 
       console.log("Validation result:", result);
     } catch (err) {
@@ -211,8 +320,9 @@ export default function PlayPage() {
   const resetGame = () => {
     setRevealedNumbers({});
     setValidationResult(null);
+    setShowWinningAlert(false);
     const mockTicket = getMockTicket();
-    setTicketData(mockTicket);
+    // setTicketData(mockTicket);
     setGridData(mockTicket.gridElements);
     setGridKey(`grid-${Date.now()}`);
   };
@@ -248,12 +358,21 @@ export default function PlayPage() {
         />
       )}
 
+      {showWinningAlert && validationResult?.prize && (
+        <WinningNotification
+          prize={validationResult.prize}
+          onClose={() => setShowWinningAlert(false)}
+        />
+      )}
+
       <div className="z-10 max-w-5xl w-full flex flex-col items-center gap-8">
         <h1 className="text-3xl font-bold">Scratch-It Game</h1>
 
         {error && (
           <p className="text-red-500 mb-4">{error} (using fallback data)</p>
         )}
+
+        {!ticketData && <NoTickets />}
 
         {ticketData && (
           <div className="text-center">
@@ -323,6 +442,10 @@ export default function PlayPage() {
                 Play Again
               </button>
             )}
+          </div>
+
+          <div>
+            <BuyTickets />
           </div>
 
           <div className="mt-8">
