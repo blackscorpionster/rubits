@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ScratchGrid } from "./components";
+import { BuyTickets, NoTickets, ScratchGrid } from "./components";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { playWinSound } from "../../utils/audioUtils";
@@ -195,7 +195,7 @@ export default function PlayPage() {
         const result = await response.json();
 
         if (result.success) {
-          setTicketData(result.data);
+          // setTicketData(result.data);
           setGridData(result.data.gridElements);
         } else {
           setError(result.message || "Failed to fetch ticket data");
@@ -322,7 +322,7 @@ export default function PlayPage() {
     setValidationResult(null);
     setShowWinningAlert(false);
     const mockTicket = getMockTicket();
-    setTicketData(mockTicket);
+    // setTicketData(mockTicket);
     setGridData(mockTicket.gridElements);
     setGridKey(`grid-${Date.now()}`);
   };
@@ -371,6 +371,8 @@ export default function PlayPage() {
         {error && (
           <p className="text-red-500 mb-4">{error} (using fallback data)</p>
         )}
+
+        {!ticketData && <NoTickets />}
 
         {ticketData && (
           <div className="text-center">
@@ -440,6 +442,10 @@ export default function PlayPage() {
                 Play Again
               </button>
             )}
+          </div>
+
+          <div>
+            <BuyTickets />
           </div>
 
           <div className="mt-8">
