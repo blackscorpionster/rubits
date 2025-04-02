@@ -518,10 +518,6 @@ export default function PlayPage() {
           <p className="mb-4 text-center">
             Scratch away to reveal the numbers!
           </p>
-          <p className="mb-4 text-center">
-            {Object.keys(revealedNumbers).length} of {gridData.length} numbers
-            revealed
-          </p>
 
           {notification && (
             <div className="mb-6 p-4 bg-blue-100 rounded-lg text-center text-blue-700">
@@ -534,7 +530,7 @@ export default function PlayPage() {
               onClick={handleValidateGame}
               className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-300"
               disabled={
-                Object.keys(revealedNumbers).length === 0 ||
+                Object.keys(revealedNumbers).length < gridData.length ||
                 submitting ||
                 notificationState !== "none"
               }
