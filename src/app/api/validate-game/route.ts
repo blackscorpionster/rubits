@@ -19,7 +19,6 @@ const validateGameResult = (
 
   let hasWon = false;
   let winningNumber = null;
-  let maxMatchingTiles = 0;
 
   // Convert the flat map of revealed numbers to a 3x3 grid for easier checking
   const grid: number[][] = [
@@ -36,63 +35,17 @@ const validateGameResult = (
     }
   }
 
-  // Check rows for matching numbers
+  // Count occurrences of each number across the entire grid
+  const totalCounts: Record<number, number> = {};
   for (let row = 0; row < 3; row++) {
-    const counts: Record<number, number> = {};
     for (let col = 0; col < 3; col++) {
       const num = grid[row][col];
       if (num !== 0) {
-        counts[num] = (counts[num] || 0) + 1;
-        maxMatchingTiles = Math.max(maxMatchingTiles, counts[num]);
-        if (counts[num] >= matchingTilesToWin) {
+        totalCounts[num] = (totalCounts[num] || 0) + 1;
+        if (totalCounts[num] >= matchingTilesToWin) {
           hasWon = true;
           winningNumber = num;
         }
-      }
-    }
-  }
-
-  // Check columns for matching numbers
-  for (let col = 0; col < 3; col++) {
-    const counts: Record<number, number> = {};
-    for (let row = 0; row < 3; row++) {
-      const num = grid[row][col];
-      if (num !== 0) {
-        counts[num] = (counts[num] || 0) + 1;
-        maxMatchingTiles = Math.max(maxMatchingTiles, counts[num]);
-        if (counts[num] >= matchingTilesToWin) {
-          hasWon = true;
-          winningNumber = num;
-        }
-      }
-    }
-  }
-
-  // Check diagonals for matching numbers
-  // Main diagonal (top-left to bottom-right)
-  const diagCounts1: Record<number, number> = {};
-  for (let i = 0; i < 3; i++) {
-    const num = grid[i][i];
-    if (num !== 0) {
-      diagCounts1[num] = (diagCounts1[num] || 0) + 1;
-      maxMatchingTiles = Math.max(maxMatchingTiles, diagCounts1[num]);
-      if (diagCounts1[num] >= matchingTilesToWin) {
-        hasWon = true;
-        winningNumber = num;
-      }
-    }
-  }
-
-  // Other diagonal (top-right to bottom-left)
-  const diagCounts2: Record<number, number> = {};
-  for (let i = 0; i < 3; i++) {
-    const num = grid[i][2 - i];
-    if (num !== 0) {
-      diagCounts2[num] = (diagCounts2[num] || 0) + 1;
-      maxMatchingTiles = Math.max(maxMatchingTiles, diagCounts2[num]);
-      if (diagCounts2[num] >= matchingTilesToWin) {
-        hasWon = true;
-        winningNumber = num;
       }
     }
   }
@@ -123,7 +76,8 @@ const validateGameResult = (
 export async function POST(request: NextRequest) {
   try {
     const body: ValidateGameRequest = await request.json();
-    const { revealedNumbers, matchingTilesToWin: matchingTilesToWin = 3 } = body;
+    const { revealedNumbers, matchingTilesToWin: matchingTilesToWin = 3 } =
+      body;
 
     console.log("Revealed numbers received:", revealedNumbers);
     console.log("Match tiles to win:", matchingTilesToWin);
