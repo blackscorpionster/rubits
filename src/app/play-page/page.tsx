@@ -28,14 +28,8 @@ interface ValidationResult {
   message?: string;
 }
 
-interface PlayPageProps {
-  email?: string;
-}
-
 // TODO: Add an image generated from AI here? Hamish on it...
-const PlayPage: React.FC<PlayPageProps> = ({ email }) => {
-  console.log(email); // TODO: Use this email to fetch the ticket data from the database
-
+export default function PlayPage() {
   const [revealedNumbers, setRevealedNumbers] = useState<
     Record<string, number>
   >({});
@@ -275,6 +269,4 @@ const PlayPage: React.FC<PlayPageProps> = ({ email }) => {
       </div>
     </main>
   );
-};
-
-export default PlayPage;
+}
