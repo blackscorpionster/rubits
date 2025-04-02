@@ -49,6 +49,7 @@ const WinningNotification = ({
     height: typeof window !== "undefined" ? window.innerHeight : 0,
   });
   const [confettiActive, setConfettiActive] = useState(true);
+  const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -64,19 +65,21 @@ const WinningNotification = ({
     // This is a backup in case the first attempt failed
     setTimeout(() => playWinSound(), 200);
 
-    const timer = setTimeout(() => {
-      setConfettiActive(false);
-      setTimeout(onClose, 500);
-    }, 8000);
-
     return () => {
       window.removeEventListener("resize", handleResize);
-      clearTimeout(timer);
     };
-  }, [onClose]);
+  }, []);
+
+  const handleClose = () => {
+    setExiting(true);
+    setConfettiActive(false);
+    setTimeout(() => {
+      onClose();
+    }, 500); // Wait for exit animation to complete
+  };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
       {confettiActive && (
         <ReactConfetti
           width={windowDimensions.width}
@@ -87,8 +90,16 @@ const WinningNotification = ({
           colors={["#FFD700", "#FFA500", "#FF4500", "#FF1493", "#9400D3"]}
         />
       )}
-      <div className="absolute inset-0 bg-black bg-opacity-50 animate-pulse"></div>
-      <div className="relative">
+      <div
+        className={`absolute inset-0 bg-black/30 backdrop-blur-[2px] pointer-events-auto ${
+          exiting ? "animate-fade-out" : ""
+        }`}
+      ></div>
+      <div
+        className={`relative pointer-events-auto ${
+          exiting ? "animate-slide-down" : "animate-zoom-in"
+        }`}
+      >
         <div className="animate-bounce-slow bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 text-white font-bold text-4xl md:text-6xl px-10 py-8 rounded-xl shadow-2xl border-4 border-yellow-300 transform rotate-2 scale-100">
           <div className="animate-pulse mb-4 text-center">🎉 WINNER! 🎉</div>
           <div className="text-center text-yellow-300 font-extrabold animate-pulse drop-shadow-lg">
@@ -96,13 +107,10 @@ const WinningNotification = ({
           </div>
           <div className="flex justify-center mt-6">
             <button
-              onClick={() => {
-                playWinSound();
-                onClose();
-              }}
+              onClick={handleClose}
               className="bg-white text-pink-600 hover:bg-yellow-200 text-xl font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
             >
-              AWESOME!
+              Keep playing!
             </button>
           </div>
         </div>
@@ -125,29 +133,34 @@ const WinningNotification = ({
 
 // Ready to reveal notification
 const ReadyToReveal = ({ onReveal }: { onReveal: () => void }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onReveal();
-    }, 3000); // Auto continue after 3 seconds
+  const [exiting, setExiting] = useState(false);
 
-    return () => clearTimeout(timer);
-  }, [onReveal]);
+  const handleReveal = () => {
+    setExiting(true);
+    setTimeout(() => {
+      onReveal();
+    }, 500); // Wait for exit animation to complete
+  };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-      <div className="relative">
-        <div className="bg-gradient-to-r from-purple-400 via-blue-500 to-indigo-500 text-white font-bold text-2xl md:text-4xl px-8 py-6 rounded-xl shadow-2xl border-4 border-indigo-300 transform -rotate-1 scale-100 animate-pulse">
+    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px] pointer-events-auto"></div>
+      <div
+        className={`relative pointer-events-auto ${
+          exiting ? "animate-slide-down" : "animate-slide-up"
+        }`}
+      >
+        <div className="bg-gradient-to-r from-purple-400 via-blue-500 to-indigo-500 text-white font-bold text-2xl md:text-4xl px-8 py-6 rounded-xl shadow-2xl border-4 border-indigo-300 transform -rotate-1 scale-100">
           <div className="text-center mb-4">✨ All Revealed! ✨</div>
           <div className="text-center text-indigo-100 font-bold">
             Ready to see if you won?
           </div>
           <div className="flex justify-center mt-6">
             <button
-              onClick={onReveal}
+              onClick={handleReveal}
               className="bg-white text-indigo-600 hover:bg-indigo-100 text-xl font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
             >
-              Reveal Now!
+              Find out!
             </button>
           </div>
         </div>
@@ -164,18 +177,27 @@ const ReadyToReveal = ({ onReveal }: { onReveal: () => void }) => {
 
 // Better luck next time notification
 const BetterLuckNextTime = ({ onClose }: { onClose: () => void }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 5000); // Auto close after 5 seconds
+  const [exiting, setExiting] = useState(false);
 
-    return () => clearTimeout(timer);
-  }, [onClose]);
+  const handleClose = () => {
+    setExiting(true);
+    setTimeout(() => {
+      onClose();
+    }, 500); // Wait for exit animation to complete
+  };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-      <div className="relative">
+    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+      <div
+        className={`absolute inset-0 bg-black/30 backdrop-blur-[2px] pointer-events-auto ${
+          exiting ? "animate-fade-out" : ""
+        }`}
+      ></div>
+      <div
+        className={`relative pointer-events-auto ${
+          exiting ? "animate-slide-down" : "animate-zoom-in"
+        }`}
+      >
         <div className="bg-gradient-to-r from-blue-400 via-purple-500 to-indigo-500 text-white font-bold text-2xl md:text-4xl px-8 py-6 rounded-xl shadow-2xl border-4 border-blue-300 transform rotate-1 scale-100">
           <div className="text-center mb-4">🎮 Not a Winner 🎮</div>
           <div className="text-center text-blue-100 font-bold">
@@ -183,10 +205,10 @@ const BetterLuckNextTime = ({ onClose }: { onClose: () => void }) => {
           </div>
           <div className="flex justify-center mt-6">
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="bg-white text-purple-600 hover:bg-purple-100 text-xl font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
             >
-              Try Again
+              Keep playing!
             </button>
           </div>
         </div>
@@ -214,6 +236,9 @@ export default function PlayPage() {
     useState<ValidationResult | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [notification, setNotification] = useState<string | null>(null);
+  const [notificationState, setNotificationState] = useState<
+    "none" | "readyToReveal" | "transitioning" | "winning" | "losing"
+  >("none");
   const [showWinningAlert, setShowWinningAlert] = useState(false);
   const [showLosingAlert, setShowLosingAlert] = useState(false);
   const [showReadyToReveal, setShowReadyToReveal] = useState(false);
@@ -319,14 +344,21 @@ export default function PlayPage() {
       };
 
       if (Object.keys(newRevealedNumbers).length === gridData.length) {
-        setShowReadyToReveal(true);
+        setNotificationState("readyToReveal");
       }
 
       return newRevealedNumbers;
     });
   };
 
-  const handleValidate = async () => {
+  const handleReveal = () => {
+    setNotificationState("transitioning");
+
+    // Validate the game result
+    handleValidateGame();
+  };
+
+  const handleValidateGame = async () => {
     try {
       setSubmitting(true);
       setValidationResult(null);
@@ -342,43 +374,41 @@ export default function PlayPage() {
       });
 
       const result = await response.json();
-
       setValidationResult(result);
 
       if (result.success) {
-        setNotification("Checking your ticket...");
-
-        setTimeout(() => {
-          setNotification(null);
-          if (result.won) {
-            setShowWinningAlert(true);
-            playWinSound();
-          } else {
-            setShowLosingAlert(true);
-          }
-        }, 1500);
+        if (result.won) {
+          setNotificationState("winning");
+          playWinSound();
+        } else {
+          setNotificationState("losing");
+        }
+      } else {
+        // Handle validation error
+        setError(result.message || "Validation failed");
+        setNotificationState("none");
       }
-
-      console.log("Validation result:", result);
     } catch (err) {
-      console.error("Error submitting numbers:", err);
+      console.error("Error validating game:", err);
       setValidationResult({
         success: false,
         message: "Failed to submit numbers to server",
       });
+      setNotificationState("none");
     } finally {
       setSubmitting(false);
     }
   };
 
+  const handleGameReset = () => {
+    setNotificationState("none");
+    resetGame();
+  };
+
   const resetGame = () => {
     setRevealedNumbers({});
     setValidationResult(null);
-    setShowWinningAlert(false);
-    setShowLosingAlert(false);
-    setShowReadyToReveal(false);
     const mockTicket = getMockTicket();
-    // setTicketData(mockTicket);
     setGridData(mockTicket.gridElements);
     setGridKey(`grid-${Date.now()}`);
   };
@@ -407,29 +437,19 @@ export default function PlayPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-8">
-      {showWinningAlert && validationResult?.prize && (
+      {notificationState === "readyToReveal" && (
+        <ReadyToReveal onReveal={handleReveal} />
+      )}
+
+      {notificationState === "winning" && validationResult?.prize && (
         <WinningNotification
           prize={validationResult.prize}
-          onClose={() => setShowWinningAlert(false)}
+          onClose={handleGameReset}
         />
       )}
 
-      {showLosingAlert && (
-        <BetterLuckNextTime
-          onClose={() => {
-            setShowLosingAlert(false);
-            resetGame();
-          }}
-        />
-      )}
-
-      {showReadyToReveal && (
-        <ReadyToReveal
-          onReveal={() => {
-            setShowReadyToReveal(false);
-            handleValidate();
-          }}
-        />
+      {notificationState === "losing" && (
+        <BetterLuckNextTime onClose={handleGameReset} />
       )}
 
       <div className="z-10 max-w-5xl w-full flex flex-col items-center gap-8">
@@ -474,19 +494,18 @@ export default function PlayPage() {
 
           <div className="flex justify-center gap-4">
             <button
-              onClick={handleValidate}
+              onClick={handleValidateGame}
               className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-300"
               disabled={
                 Object.keys(revealedNumbers).length === 0 ||
                 submitting ||
-                validationResult !== null ||
-                showReadyToReveal
+                notificationState !== "none"
               }
             >
               {submitting ? "Validating..." : "Validate Now"}
             </button>
 
-            {validationResult && (
+            {validationResult && notificationState === "none" && (
               <button
                 onClick={resetGame}
                 className="px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
