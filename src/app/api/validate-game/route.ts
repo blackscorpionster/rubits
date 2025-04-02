@@ -3,12 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 interface ValidateGameRequest {
   revealedNumbers: Record<string, number>;
   ticketId?: string | null;
-  matchTilesToWin?: number;
+  matchingTilesToWin?: number;
 }
 
 const validateGameResult = (
   revealedNumbers: Record<string, number>,
-  matchTilesToWin: number = 3 // Default to 3 if not provided
+  matchingTilesToWin: number = 3 // Default to 3 if not provided
 ): {
   isValid: boolean;
   hasWon: boolean;
@@ -44,7 +44,7 @@ const validateGameResult = (
       if (num !== 0) {
         counts[num] = (counts[num] || 0) + 1;
         maxMatchingTiles = Math.max(maxMatchingTiles, counts[num]);
-        if (counts[num] >= matchTilesToWin) {
+        if (counts[num] >= matchingTilesToWin) {
           hasWon = true;
           winningNumber = num;
         }
@@ -60,7 +60,7 @@ const validateGameResult = (
       if (num !== 0) {
         counts[num] = (counts[num] || 0) + 1;
         maxMatchingTiles = Math.max(maxMatchingTiles, counts[num]);
-        if (counts[num] >= matchTilesToWin) {
+        if (counts[num] >= matchingTilesToWin) {
           hasWon = true;
           winningNumber = num;
         }
@@ -76,7 +76,7 @@ const validateGameResult = (
     if (num !== 0) {
       diagCounts1[num] = (diagCounts1[num] || 0) + 1;
       maxMatchingTiles = Math.max(maxMatchingTiles, diagCounts1[num]);
-      if (diagCounts1[num] >= matchTilesToWin) {
+      if (diagCounts1[num] >= matchingTilesToWin) {
         hasWon = true;
         winningNumber = num;
       }
@@ -90,7 +90,7 @@ const validateGameResult = (
     if (num !== 0) {
       diagCounts2[num] = (diagCounts2[num] || 0) + 1;
       maxMatchingTiles = Math.max(maxMatchingTiles, diagCounts2[num]);
-      if (diagCounts2[num] >= matchTilesToWin) {
+      if (diagCounts2[num] >= matchingTilesToWin) {
         hasWon = true;
         winningNumber = num;
       }
@@ -123,14 +123,14 @@ const validateGameResult = (
 export async function POST(request: NextRequest) {
   try {
     const body: ValidateGameRequest = await request.json();
-    const { revealedNumbers, matchTilesToWin = 3 } = body;
+    const { revealedNumbers, matchingTilesToWin: matchingTilesToWin = 3 } = body;
 
     console.log("Revealed numbers received:", revealedNumbers);
-    console.log("Match tiles to win:", matchTilesToWin);
+    console.log("Match tiles to win:", matchingTilesToWin);
 
     const { isValid, hasWon, prize } = validateGameResult(
       revealedNumbers,
-      matchTilesToWin
+      matchingTilesToWin
     );
 
     return NextResponse.json({
