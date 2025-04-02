@@ -127,6 +127,8 @@ export const ScratchGrid: React.FC<ScratchGridProps> = ({
       style={{
         aspectRatio: `444 / 666`,
         maxWidth: "444px",
+        borderRadius: "1rem",
+        overflow: "hidden"
       }}
       onMouseDown={handleGridMouseDown}
       onMouseMove={handleGridMouseMove}

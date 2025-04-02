@@ -3,10 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 interface ValidateGameRequest {
   revealedNumbers: Record<string, number>;
   ticketId?: string | null;
+  matchTilesToWin?: number;
 }
 
 const validateGameResult = (
-  revealedNumbers: Record<string, number>
+  revealedNumbers: Record<string, number>,
+  matchTilesToWin: number = 3 // Default to 3 if not provided
 ): {
   isValid: boolean;
   hasWon: boolean;
@@ -14,17 +16,18 @@ const validateGameResult = (
 } => {
   // Check if user has revealed all 9 numbers
   const isValid = Object.keys(revealedNumbers).length === 9;
-  
+
   let hasWon = false;
   let winningNumber = null;
-  
+  let maxMatchingTiles = 0;
+
   // Convert the flat map of revealed numbers to a 3x3 grid for easier checking
   const grid: number[][] = [
     [0, 0, 0],
     [0, 0, 0],
     [0, 0, 0],
   ];
-  
+
   // Fill the grid with revealed numbers
   for (const position in revealedNumbers) {
     const [row, col] = position.split("-").map(Number);
@@ -32,38 +35,65 @@ const validateGameResult = (
       grid[row][col] = revealedNumbers[position];
     }
   }
-  
-  // Check rows for 3 of the same number
+
+  // Check rows for matching numbers
   for (let row = 0; row < 3; row++) {
-    if (grid[row][0] === grid[row][1] && grid[row][1] === grid[row][2] && grid[row][0] !== 0) {
-      hasWon = true;
-      winningNumber = grid[row][0];
-      break;
-    }
-  }
-  
-  // Check columns for 3 of the same number (additional win condition)
-  if (!hasWon) {
+    const counts: Record<number, number> = {};
     for (let col = 0; col < 3; col++) {
-      if (grid[0][col] === grid[1][col] && grid[1][col] === grid[2][col] && grid[0][col] !== 0) {
-        hasWon = true;
-        winningNumber = grid[0][col];
-        break;
+      const num = grid[row][col];
+      if (num !== 0) {
+        counts[num] = (counts[num] || 0) + 1;
+        maxMatchingTiles = Math.max(maxMatchingTiles, counts[num]);
+        if (counts[num] >= matchTilesToWin) {
+          hasWon = true;
+          winningNumber = num;
+        }
       }
     }
   }
-  
-  // Check diagonals for 3 of the same number (additional win condition)
-  if (!hasWon) {
-    // Main diagonal (top-left to bottom-right)
-    if (grid[0][0] === grid[1][1] && grid[1][1] === grid[2][2] && grid[0][0] !== 0) {
-      hasWon = true;
-      winningNumber = grid[0][0];
+
+  // Check columns for matching numbers
+  for (let col = 0; col < 3; col++) {
+    const counts: Record<number, number> = {};
+    for (let row = 0; row < 3; row++) {
+      const num = grid[row][col];
+      if (num !== 0) {
+        counts[num] = (counts[num] || 0) + 1;
+        maxMatchingTiles = Math.max(maxMatchingTiles, counts[num]);
+        if (counts[num] >= matchTilesToWin) {
+          hasWon = true;
+          winningNumber = num;
+        }
+      }
     }
-    // Other diagonal (top-right to bottom-left)
-    else if (grid[0][2] === grid[1][1] && grid[1][1] === grid[2][0] && grid[0][2] !== 0) {
-      hasWon = true;
-      winningNumber = grid[0][2];
+  }
+
+  // Check diagonals for matching numbers
+  // Main diagonal (top-left to bottom-right)
+  const diagCounts1: Record<number, number> = {};
+  for (let i = 0; i < 3; i++) {
+    const num = grid[i][i];
+    if (num !== 0) {
+      diagCounts1[num] = (diagCounts1[num] || 0) + 1;
+      maxMatchingTiles = Math.max(maxMatchingTiles, diagCounts1[num]);
+      if (diagCounts1[num] >= matchTilesToWin) {
+        hasWon = true;
+        winningNumber = num;
+      }
+    }
+  }
+
+  // Other diagonal (top-right to bottom-left)
+  const diagCounts2: Record<number, number> = {};
+  for (let i = 0; i < 3; i++) {
+    const num = grid[i][2 - i];
+    if (num !== 0) {
+      diagCounts2[num] = (diagCounts2[num] || 0) + 1;
+      maxMatchingTiles = Math.max(maxMatchingTiles, diagCounts2[num]);
+      if (diagCounts2[num] >= matchTilesToWin) {
+        hasWon = true;
+        winningNumber = num;
+      }
     }
   }
 
@@ -76,24 +106,32 @@ const validateGameResult = (
     6: "$50",
     7: "$100",
     8: "$500",
-    9: "$1000"
+    9: "$1000",
   };
 
   return {
     isValid,
     hasWon,
-    prize: hasWon ? `Congratulations! You won ${prizeAmounts[winningNumber as keyof typeof prizeAmounts] || "$10"}!` : null,
+    prize: hasWon
+      ? `Congratulations! You won ${
+          prizeAmounts[winningNumber as keyof typeof prizeAmounts] || "$10"
+        }!`
+      : null,
   };
 };
 
 export async function POST(request: NextRequest) {
   try {
     const body: ValidateGameRequest = await request.json();
-    const { revealedNumbers } = body;
+    const { revealedNumbers, matchTilesToWin = 3 } = body;
 
     console.log("Revealed numbers received:", revealedNumbers);
+    console.log("Match tiles to win:", matchTilesToWin);
 
-    const { isValid, hasWon, prize } = validateGameResult(revealedNumbers);
+    const { isValid, hasWon, prize } = validateGameResult(
+      revealedNumbers,
+      matchTilesToWin
+    );
 
     return NextResponse.json({
       success: true,
