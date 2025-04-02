@@ -14,7 +14,7 @@ const Home: React.FC = () => {
 		return regex.test(email);
 	};
 
-	const handleSubmit = (e: React.FormEvent): void => {
+	const handleSubmit = async (e: React.FormEvent): Promise<void> => {
 		e.preventDefault();
 		setError("");
 
@@ -30,14 +30,30 @@ const Home: React.FC = () => {
 
 		setLoading(true);
 
-		// fake api call w timeout
-		setTimeout(() => {
-			localStorage.setItem("userEmail", email);
+		const response = await fetch(`/api/login?email=${encodeURIComponent(email)}`, {
+			method: "GET",
+			headers: {
+			  "Content-Type": "application/json",
+			},
+		});
 
-			router.push("/play-page");
+		let player = await response.json();
 
-			setLoading(false);
-		}, 1000);
+		if (!player) {
+			console.log("Player not found, creating a new one");
+			const response = await fetch("/api/login", {
+				method: "POST",
+				headers: {
+				  "Content-Type": "application/json",
+				},
+				body: JSON.stringify({ email: email }),
+			  });
+			player = await response.json();
+		}
+
+		localStorage.setItem("playerId", player.id);
+		router.push("/play-page");
+		setLoading(false);
 	};
 
 	return (

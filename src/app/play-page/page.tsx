@@ -255,18 +255,18 @@ export default function PlayPage() {
   const [showLosingAlert, setShowLosingAlert] = useState(false);
   const [showReadyToReveal, setShowReadyToReveal] = useState(false);
   const [gridKey, setGridKey] = useState<string>("initial");
-  const [email, setEmail] = useState<string | null>(null);
+  const [playerId, setPlayerId] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const userEmail = localStorage.getItem("userEmail");
+    const playerId = localStorage.getItem("playerId");
 
-    if (!userEmail) {
+    if (!playerId) {
       router.push("/");
       return;
     }
 
-    setEmail(userEmail);
+    setPlayerId(playerId);
   }, [router]);
 
   const handleLogout = () => {
@@ -442,7 +442,7 @@ export default function PlayPage() {
         window.scrollTo(0, parseInt(scrollY || "0", 10) * -1);
       }
     }
-    
+
     return () => {
       // Cleanup when component unmounts
       document.body.style.overflow = "";
