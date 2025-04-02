@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+}
+
+model Draw {
+  	id  				String @default(dbgenerated("uuid_generate_v4()")) @id
+	name 				String @unique
+	numberOfTickets 	Int @default(1000) @map(name: "number_of_tickets")
+	ticketCost 			Int @default(1) @map(name: "ticket_cost")
+	profitPercent 		Float @default(25) @map(name: "profit_percent")
+	gridSizeX 			Int @default(5) @map(name: "grid_size_x")
+	gridSizeY 			Int @default(10) @map(name: "grid_size_y")
+	matchingTilesToWin 	Int @default(3) @map(name: "matching_tiles_to_win")
+	tilesTheme 			String? @default("numbers") @map(name: "tiles_theme")
+	Tiers				Tier[]
+	Tickets				Ticket[]
+}
+
+model Tier {
+  	id					String @default(dbgenerated("uuid_generate_v4()")) @id
+	draw 				Draw @relation(fields: [drawId], references: [id])
+  	drawId 				String @map(name: "draw_id")
+	prize 				Float
+	numberOfTickets 	Int @map(name: "number_of_tickets")
+	Tickets				Ticket[]
+}
+
+model Player {
+  	id				String @default(dbgenerated("uuid_generate_v4()")) @id
+  	email 			String
+	dateCreated		DateTime @default(now()) @map(name: "date_created")
+	Tickets			Ticket[]
+}
+
+model Ticket {
+	id 				String @default(dbgenerated("uuid_generate_v4()")) @id
+	draw 			Draw @relation(fields: [drawId], references: [id])
+	drawId 			String @map(name: "draw_id")
+	gridElements	Json @map(name: "grid_elements")
+	md5 			String
+	status 			String @default("intact")
+	tier			Tier? @relation(fields: [tierId], references: [id])
+	tierId 			String? @map(name: "tier_id")
+	position 		Int
+	dateCreated 	DateTime  @default(now()) @map(name: "date_created")
+	Player			Player? @relation(fields: [purchasedBy], references: [id])
+	purchasedBy 	String? @map(name: "purchased_by")
+}
