@@ -77,21 +77,9 @@ export const ScratchCell = forwardRef<ScratchCellRef, ScratchCellProps>(
         }}
       >
         {/* Number display (becomes visible as user scratches) */}
-        <div className="absolute inset-0 flex items-center justify-center text-6xl font-black z-0">
+        <div className="absolute inset-0 flex items-center justify-center text-5xl font-black z-0">
           <span
-            className={`flex items-center justify-center rounded-full bg-white/90 shadow-lg ${
-              value.toString().length > 2
-                ? "w-24 h-24"
-                : value.toString().length > 1
-                ? "w-20 h-20"
-                : "w-16 h-16"
-            }`}
-            style={{
-              textShadow:
-                "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000",
-              color: "#FF3E7F",
-              border: "2px solid #FF3E7F",
-            }}
+            className={`flex items-center justify-center w-26 h-20 rounded-full bg-white/90 shadow-lg text-[#FE80D3] border-2 border-[#FE80D3] [-webkit-text-stroke:1px_black]`}
           >
             {value}
           </span>

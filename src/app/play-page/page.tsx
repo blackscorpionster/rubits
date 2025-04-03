@@ -493,7 +493,7 @@ export default function PlayPage() {
 
       <div className="z-10 max-w-5xl w-full flex flex-col items-center gap-8">
         <h1 className="font-lacquer text-4xl md:text-5xl font-normal text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 transform rotate-1 tracking-wider shadow-lg">
-          Rub-o-Rama
+          Jumbo's JumBucks
         </h1>
 
         {error && <p className="text-red-500 mb-4">{error}</p>}
@@ -502,9 +502,11 @@ export default function PlayPage() {
 
         {ticketData && (
           <div className="text-center">
-            <h2 className="text-xl font-semibold">{ticketData.draw.name}</h2>
-            <p className="text-sm text-gray-600">Ticket ID: {ticketData.id}</p>
-            <p className="text-sm text-gray-600">Draw: {ticketData.drawId}</p>
+            <div className="text-xs text-gray-400 p-1 rounded">
+              <p>Dev Mode: {ticketData.draw.name}</p>
+              <p>ID: {ticketData.id}</p>
+              <p>Draw: {ticketData.drawId}</p>
+            </div>
           </div>
         )}
 
@@ -517,10 +519,6 @@ export default function PlayPage() {
         <div className="w-full max-w-md">
           <p className="mb-4 text-center">
             Scratch away to reveal the numbers!
-          </p>
-          <p className="mb-4 text-center">
-            {Object.keys(revealedNumbers).length} of {gridData.length} numbers
-            revealed
           </p>
 
           {notification && (

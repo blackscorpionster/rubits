@@ -19,8 +19,8 @@ const lacquer = Lacquer({
 });
 
 export const metadata: Metadata = {
-  title: "Rub-o-Rama",
-  description: "Why doom scroll when you win with rub-o-rama?",
+  title: "Jumbucks",
+  description: "Win real bucks with Jumbo Jumbucks!",
 };
 
 const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -29,9 +29,7 @@ const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${lacquer.variable} antialiased`}
       >
-        <div className="mx-auto max-w-[600px] w-full">
-          {children}
-        </div>
+        <div className="mx-auto max-w-[600px] w-full">{children}</div>
       </body>
     </html>
   );
