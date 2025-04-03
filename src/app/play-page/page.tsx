@@ -411,6 +411,7 @@ export default function PlayPage() {
       setTicketsData(initialTicketsData);
 
       setGridData(initialTicketsData[allTickets[0].id].gridData);
+      setCurrentTicketIndex(0);
     } else {
       setTickets([]);
       setTicketData(null);
@@ -725,28 +726,6 @@ export default function PlayPage() {
   const handleGameReset = () => {
     setNotificationState("none");
     resetGame();
-
-    const nextUnscratchedIndex = findNextUnscratchedTicketIndex();
-
-    if (nextUnscratchedIndex !== null) {
-      setTimeout(() => {
-        if (ticketData) {
-          setTicketsData((prev) => ({
-            ...prev,
-            [ticketData.id]: {
-              ...prev[ticketData.id],
-              revealedNumbers: { ...revealedNumbers },
-            },
-          }));
-        }
-
-        setCurrentTicketIndex(nextUnscratchedIndex);
-      }, 300); // for smoother transition -ts
-    } else {
-      setNotification(
-        "You've scratched all your tickets! Buy more to keep playing."
-      );
-    }
   };
 
   const resetGame = () => {
