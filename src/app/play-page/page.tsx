@@ -1,52 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { BuyTickets, NoTickets, ScratchGrid } from "./components";
+import { NoTickets, ScratchGrid } from "./components";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { playWinSound } from "../../utils/audioUtils";
+import { BuyTicketsContainer } from "./components/BuyTicketsContainer";
+import { Draw, GridItem, Ticket, ValidationResult } from "./types";
 
 const ReactConfetti = dynamic(() => import("react-confetti"), {
 	ssr: false,
 });
-
-interface GridItem {
-	id: string;
-	value: number;
-}
-
-interface Draw {
-	id: string;
-	name: string;
-	numberOfTickets: number;
-	ticketCost: number;
-	profitPercent: number;
-	gridSizeX: number;
-	gridSizeY: number;
-	matchingTilesToWin: number;
-	tilesTheme: string;
-}
-
-interface Ticket {
-	id: string;
-	drawId: string;
-	gridElements: number[];
-	md5: string;
-	status: string;
-	tierId: string;
-	position: number;
-	dateCreated: string;
-	purchasedBy: string | null;
-	draw: Draw;
-}
-
-interface ValidationResult {
-	success: boolean;
-	valid?: boolean;
-	won?: boolean;
-	prize?: string | null;
-	message?: string;
-}
 
 // Winning notification with animation
 const WinningNotification = ({
@@ -547,46 +511,22 @@ export default function PlayPage() {
 						)}
 					</div>
 
-					<div>
-						<BuyTickets />
-					</div>
-					{/* <div>
-						<img
-							src={
-								`data:image/png;base64, ${customImage}` || "/default-image.png"
-							}
-							alt="Custom Ticket"
-							style={{
-								width: "150px",
-								height: "150px",
-								objectFit: "cover",
-							}}
-						/>
-					</div> */}
-				</div>
-			</div>
+          <div>
+            <BuyTicketsContainer />
+          </div>
+        </div>
+      </div>
 
-			<button
-				onClick={handleLogout}
-				className="fixed bottom-4 right-4 bg-gray-800/70 hover:bg-red-600/90 text-white rounded-full p-2 shadow-lg transition-all duration-300 hover:scale-110 border border-gray-700 z-10"
-				aria-label="Logout"
-				title="Logout"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					className="h-5 w-5"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-					strokeWidth={2}
-				>
-					<path
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-					/>
-				</svg>
-			</button>
-		</main>
-	);
+      <button
+        onClick={handleLogout}
+        className="fixed bottom-4 right-4 bg-gray-800/70 hover:bg-red-600/90 text-white rounded-full p-2 shadow-lg transition-all duration-300 hover:scale-110 border border-gray-700 z-10"
+        aria-label="Logout"
+        title="Logout"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      </button>
+    </main>
+  );
 }
