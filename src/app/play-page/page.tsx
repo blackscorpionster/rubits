@@ -1,52 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { BuyTickets, NoTickets, ScratchGrid } from "./components";
+import { NoTickets, ScratchGrid } from "./components";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { playWinSound } from "../../utils/audioUtils";
+import { BuyTicketsContainer } from "./components/BuyTicketsContainer";
+import { Draw, GridItem, Ticket, ValidationResult } from "./types";
 
 const ReactConfetti = dynamic(() => import("react-confetti"), {
   ssr: false,
 });
-
-interface GridItem {
-  id: string;
-  value: number;
-}
-
-interface Draw {
-  id: string;
-  name: string;
-  numberOfTickets: number;
-  ticketCost: number;
-  profitPercent: number;
-  gridSizeX: number;
-  gridSizeY: number;
-  matchingTilesToWin: number;
-  tilesTheme: string;
-}
-
-interface Ticket {
-  id: string;
-  drawId: string;
-  gridElements: number[];
-  md5: string;
-  status: string;
-  tierId: string;
-  position: number;
-  dateCreated: string;
-  purchasedBy: string | null;
-  draw: Draw;
-}
-
-interface ValidationResult {
-  success: boolean;
-  valid?: boolean;
-  won?: boolean;
-  prize?: string | null;
-  message?: string;
-}
 
 // Winning notification with animation
 const WinningNotification = ({
@@ -535,11 +499,11 @@ export default function PlayPage() {
           </div>
 
           <div>
-            <BuyTickets />
+            <BuyTicketsContainer />
           </div>
         </div>
       </div>
-      
+
       <button
         onClick={handleLogout}
         className="fixed bottom-4 right-4 bg-gray-800/70 hover:bg-red-600/90 text-white rounded-full p-2 shadow-lg transition-all duration-300 hover:scale-110 border border-gray-700"
