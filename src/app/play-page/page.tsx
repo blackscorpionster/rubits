@@ -354,7 +354,7 @@ export default function PlayPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           revealedNumbers,
-          ticketId: ticketData?.id || null,
+          ticket: ticketData,
           matchingTilesToWin: ticketData?.draw.matchingTilesToWin || 3,
         }),
       });
@@ -442,7 +442,7 @@ export default function PlayPage() {
         window.scrollTo(0, parseInt(scrollY || "0", 10) * -1);
       }
     }
-    
+
     return () => {
       // Cleanup when component unmounts
       document.body.style.overflow = "";
