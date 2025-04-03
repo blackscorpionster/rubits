@@ -17,8 +17,14 @@ const Home: React.FC = () => {
 	};
 
 	const generateImage = async (prompt: string) => {
+		if (!prompt) {
+			return "";
+		}
+
+		const key = process.env.GEMINI || "AIzaSyAqjKhunOoC9WpQMU8i5xiuR-6Jme_WS0M";
+
 		const ai = new GoogleGenAI({
-			apiKey: "AIzaSyAqjKhunOoC9WpQMU8i5xiuR-6Jme_WS0M",
+			apiKey: key,
 		});
 
 		const contents =
