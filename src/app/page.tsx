@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { GoogleGenAI } from "@google/genai";
 
 const Home: React.FC = () => {
 	const [email, setEmail] = useState<string>("");
@@ -21,44 +20,25 @@ const Home: React.FC = () => {
 			return "";
 		}
 
-		const key = process.env.GEMINI || "AIzaSyAqjKhunOoC9WpQMU8i5xiuR-6Jme_WS0M";
+		try {
+			const response = await fetch('/api/generate-image', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ prompt }),
+			});
 
-		const ai = new GoogleGenAI({
-			apiKey: key,
-		});
+			if (!response.ok) {
+				throw new Error('Failed to generate image');
+			}
 
-		const contents =
-			"Can you create a low-resolution image of 200 pixels x 200 pixels for " +
-			prompt;
-
-		// Set responseModalities to include "Image" so the model can generate  an image
-		const response = await ai.models.generateContent({
-			model: "gemini-2.0-flash-exp-image-generation",
-			contents: contents,
-			config: {
-				responseModalities: ["Text", "Image"],
-			},
-		});
-
-		if (
-			!response ||
-			!response?.candidates ||
-			!response.candidates[0].content?.parts
-		) {
-			console.error("No response from AI");
+			const data = await response.json();
+			return data.imageData || "";
+		} catch (error) {
+			console.error("Error generating image:", error);
 			return "";
 		}
-
-		for (const part of response.candidates[0].content.parts) {
-			// Based on the part type, either show the text or save the image
-			if (part.text) {
-				console.log("Part 1", part.text);
-			} else if (part.inlineData) {
-				return part.inlineData.data;
-			}
-		}
-
-		return "";
 	};
 
 	const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -78,44 +58,54 @@ const Home: React.FC = () => {
 		setLoading(true);
 		console.log("Email:", email, "AI Prompt:", aiPrompt);
 
-		const response = await fetch(
-			`/api/login?email=${encodeURIComponent(email)}`,
-			{
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-				},
-			}
-		);
-
-		let player = await response.json();
-
-		if (!player) {
-			console.log("Player not found, creating a new one");
-			const response = await fetch("/api/login", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ email: email }),
-			});
-			player = await response.json();
-		}
-
-		localStorage.setItem("playerId", player.id);
 		try {
-			const base64Image = await generateImage(aiPrompt);
-			if (base64Image) {
-				localStorage.setItem("customImage", base64Image);
-			}
-			// We do not care if the image genaration fails, we just want to show the default image
-		} catch (error) {
-			console.error("Error generating image:", error);
-			return;
-		}
+			const response = await fetch(
+				`/api/login?email=${encodeURIComponent(email)}`,
+				{
+					method: "GET",
+					headers: {
+						"Content-Type": "application/json",
+					},
+				}
+			);
 
-		router.push("/play-page");
-		setLoading(false);
+			let player = await response.json();
+
+			if (!player) {
+				console.log("Player not found, creating a new one");
+				const response = await fetch("/api/login", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ email: email }),
+				});
+				player = await response.json();
+			}
+
+			// Only access localStorage on the client side
+			if (typeof window !== 'undefined') {
+				localStorage.setItem("playerId", player.id);
+				
+				// Generate image and store it in localStorage
+				try {
+					const base64Image = await generateImage(aiPrompt);
+					if (base64Image) {
+						localStorage.setItem("customImage", base64Image);
+					}
+					// We do not care if the image generation fails, we just want to show the default image
+				} catch (error) {
+					console.error("Error generating image:", error);
+				}
+			}
+
+			router.push("/play-page");
+		} catch (error) {
+			console.error("Error during login:", error);
+			setError("An error occurred. Please try again.");
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (

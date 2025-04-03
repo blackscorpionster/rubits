@@ -365,7 +365,7 @@ export default function PlayPage() {
   const fetchTicketData = async () => {
     try {
       setLoading(true);
-      const playerId = localStorage.getItem("playerId");
+      const playerId = typeof window !== 'undefined' ? localStorage.getItem("playerId") : null;
       const response = await fetch(
         `/api/ticket?playerId=${encodeURIComponent(
           playerId ?? ""
@@ -426,19 +426,23 @@ export default function PlayPage() {
   };
 
   useEffect(() => {
-    const playerId = localStorage.getItem("playerId");
+    if (typeof window !== 'undefined') {
+      const playerId = localStorage.getItem("playerId");
 
-    if (!playerId) {
-      router.push("/");
-      return;
+      if (!playerId) {
+        router.push("/");
+        return;
+      }
+
+      setPlayerId(playerId);
     }
-
-    setPlayerId(playerId);
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("customImage");
-    localStorage.removeItem("playerId");
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem("customImage");
+      localStorage.removeItem("playerId");
+    }
     router.push("/");
   };
 
@@ -668,6 +672,8 @@ export default function PlayPage() {
       }
 
       // real validation for real tickets -ts
+      const playerId = typeof window !== 'undefined' ? localStorage.getItem("playerId") : null;
+      
       const response = await fetch("/api/validate-game", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -675,6 +681,7 @@ export default function PlayPage() {
           revealedNumbers: currentRevealedNumbers,
           ticket: ticketData,
           matchingTilesToWin: ticketData?.draw.matchingTilesToWin || 3,
+          playerId: playerId,
         }),
       });
 
@@ -808,8 +815,8 @@ export default function PlayPage() {
     );
   }
 
-  const customImage = localStorage.getItem("customImage");
-  const imageUrl = "data:image/png;base64," + customImage;
+  const customImage = typeof window !== 'undefined' ? localStorage.getItem("customImage") : null;
+  const imageUrl = customImage ? "data:image/png;base64," + customImage : "";
   return (
     <main
       className="flex min-h-screen flex-col items-center justify-between p-8"
