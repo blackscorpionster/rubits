@@ -355,6 +355,7 @@ export default function PlayPage() {
   const [validationResult, setValidationResult] =
     useState<ValidationResult | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [reloadTickets, setReloadTickets] = useState(true);
   const [notification, setNotification] = useState<string | null>(null);
   const [notificationState, setNotificationState] = useState<
     "none" | "readyToReveal" | "transitioning" | "winning" | "losing"
@@ -475,32 +476,32 @@ export default function PlayPage() {
 
   // fetch actual ticket data from db -ts
   useEffect(() => {
-    const fetchTicketData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch("/api/ticket");
-        const ticket = await response.json();
+    // const fetchTicketData = async () => {
+    //   try {
+    //     setLoading(true);
+    //     const response = await fetch("/api/ticket");
+    //     const ticket = await response.json();
 
-        if (ticket) {
-          const allTickets = createMockTickets(ticket, 3);
-          setTickets(allTickets);
+    //     if (ticket) {
+    //       const allTickets = createMockTickets(ticket, 3);
+    //       setTickets(allTickets);
 
-          setTicketData(allTickets[0]);
+    //       setTicketData(allTickets[0]);
 
-          const initialTicketsData = initializeTicketData(allTickets);
-          setTicketsData(initialTicketsData);
+    //       const initialTicketsData = initializeTicketData(allTickets);
+    //       setTicketsData(initialTicketsData);
 
-          setGridData(initialTicketsData[allTickets[0].id].gridData);
-        } else {
-          setError("No ticket found");
-        }
-      } catch (err) {
-        console.error("Error fetching ticket data:", err);
-        setError("Error connecting to server");
-      } finally {
-        setLoading(false);
-      }
-    };
+    //       setGridData(initialTicketsData[allTickets[0].id].gridData);
+    //     } else {
+    //       setError("No ticket found");
+    //     }
+    //   } catch (err) {
+    //     console.error("Error fetching ticket data:", err);
+    //     setError("Error connecting to server");
+    //   } finally {
+    //     setLoading(false);
+    //   }
+    // };
 
     fetchTicketData();
   }, []);
