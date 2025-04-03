@@ -37,8 +37,10 @@ const WinningNotification = ({
 
     window.addEventListener("resize", handleResize);
 
-    // Try playing the sound again when the component mounts
-    // This is a backup in case the first attempt failed
+    // Try playing the sound again when the component mounts.
+    // Browsers dont like us playing the sonuds without a prompt, so we need to do this.
+    // This is a backup in case the first attempt failed because of browser stuff
+    // Will prob result in 2 - 3 sounds playing but ya know, it's a hackathon.  -ts
     setTimeout(() => playWinSound(), 200);
 
     return () => {
@@ -51,7 +53,7 @@ const WinningNotification = ({
     setConfettiActive(false);
     setTimeout(() => {
       onClose();
-    }, 500); // Wait for exit animation to complete
+    }, 500); // needed so animation can complete before closing -ts
   };
 
   return (
@@ -107,7 +109,6 @@ const WinningNotification = ({
   );
 };
 
-// Ready to reveal notification
 const ReadyToReveal = ({ onReveal }: { onReveal: () => void }) => {
   const [exiting, setExiting] = useState(false);
 
@@ -115,7 +116,7 @@ const ReadyToReveal = ({ onReveal }: { onReveal: () => void }) => {
     setExiting(true);
     setTimeout(() => {
       onReveal();
-    }, 500); // Wait for exit animation to complete
+    }, 500); //  needed so animation can complete before closing -ts
   };
 
   return (
@@ -151,7 +152,6 @@ const ReadyToReveal = ({ onReveal }: { onReveal: () => void }) => {
   );
 };
 
-// Better luck next time notification
 const BetterLuckNextTime = ({ onClose }: { onClose: () => void }) => {
   const [exiting, setExiting] = useState(false);
 
@@ -159,7 +159,7 @@ const BetterLuckNextTime = ({ onClose }: { onClose: () => void }) => {
     setExiting(true);
     setTimeout(() => {
       onClose();
-    }, 500); // Wait for exit animation to complete
+    }, 500); // needed so animation can complete before closing -ts
   };
 
   return (
@@ -199,7 +199,6 @@ const BetterLuckNextTime = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
-// Navigation arrows component
 const NavigationArrows = ({
   onPrev,
   onNext,
@@ -332,7 +331,6 @@ const TicketCarousel = ({
 
 // TODO: Add an image generated from AI here? Hamish on it...
 export default function PlayPage() {
-  // Multiple tickets management
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [currentTicketIndex, setCurrentTicketIndex] = useState(0);
   const [ticketsData, setTicketsData] = useState<
@@ -380,10 +378,10 @@ export default function PlayPage() {
     router.push("/");
   };
 
-  // Helper to create mock tickets for testing
   const createMockTickets = (realTicket: Ticket, count: number): Ticket[] => {
     const mockTickets = [realTicket];
 
+    // lol.
     for (let i = 1; i < count; i++) {
       const originalGrid = [...realTicket.gridElements];
       let modifiedGrid: number[];
@@ -408,7 +406,6 @@ export default function PlayPage() {
     return mockTickets;
   };
 
-  // Initialize ticket data for all tickets
   const initializeTicketData = (tickets: Ticket[]) => {
     const newTicketsData: Record<
       string,
@@ -436,7 +433,7 @@ export default function PlayPage() {
     return newTicketsData;
   };
 
-  // Fetch ticket data from the real database API
+  // fetch actual ticket data from db -ts
   useEffect(() => {
     const fetchTicketData = async () => {
       try {
@@ -468,7 +465,7 @@ export default function PlayPage() {
     fetchTicketData();
   }, []);
 
-  // Update current ticket data when changing tickets
+  // update the current ticket when sliding between them -ts
   useEffect(() => {
     if (
       tickets.length > 0 &&
@@ -479,24 +476,21 @@ export default function PlayPage() {
       setTicketData(currentTicket);
 
       if (ticketsData[currentTicket.id]) {
-        // Update the current grid data and revealed numbers
         setGridData(ticketsData[currentTicket.id].gridData);
         setRevealedNumbers(ticketsData[currentTicket.id].revealedNumbers);
 
-        // Check if all numbers for this ticket are already revealed to determine notification state
+        // see if all tickets are already scratched -ts
         const currentTicketData = ticketsData[currentTicket.id];
         const allRevealed =
           Object.keys(currentTicketData.revealedNumbers).length >=
           currentTicketData.gridData.length;
 
-        // Set notification state based on reveal status, only if currently in "none" state
         if (allRevealed && notificationState === "none") {
           console.log(
             "All cells already revealed on navigation, showing notification"
           );
           setNotificationState("readyToReveal");
         } else if (!allRevealed) {
-          // Only reset notification if cells aren't all revealed
           setNotificationState("none");
           setValidationResult(null);
         }
@@ -504,7 +498,7 @@ export default function PlayPage() {
     }
   }, [currentTicketIndex, tickets, ticketsData]);
 
-  // Convert the array of numbers to the format needed by the ScratchGrid
+  // Convert the array of numbers to the format needed by the ScratchGrid - stolen off v0.dev
   const createGridDataFromArray = (
     gridElements: number[],
     gridSizeX: number,
@@ -523,7 +517,8 @@ export default function PlayPage() {
   // Handle navigation between tickets
   const goToNextTicket = () => {
     if (currentTicketIndex < tickets.length - 1) {
-      // Save current ticket in local state before switching
+      // Save current ticket in local state before switching -ts
+      // TODO: This is hacky AF - I mean it all is - but this especially so
       if (ticketData) {
         setTicketsData((prev) => ({
           ...prev,
@@ -540,7 +535,7 @@ export default function PlayPage() {
 
   const goToPrevTicket = () => {
     if (currentTicketIndex > 0) {
-      // Save current ticket state before switching
+      // Save current ticket state before switching -ts
       if (ticketData) {
         setTicketsData((prev) => ({
           ...prev,
@@ -580,7 +575,6 @@ export default function PlayPage() {
           }`
         );
 
-        // Use the ticket's grid data length instead of the global gridData
         if (
           Object.keys(newRevealedNumbers).length >= ticketData.gridData.length
         ) {
@@ -662,7 +656,7 @@ export default function PlayPage() {
         return;
       }
 
-      // Regular API validation for real tickets
+      // real validation for real tickets -ts
       const response = await fetch("/api/validate-game", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -685,7 +679,6 @@ export default function PlayPage() {
           setNotificationState("losing");
         }
       } else {
-        // Handle validation error
         setError(result.message || "Validation failed");
         setNotificationState("none");
       }
@@ -701,9 +694,48 @@ export default function PlayPage() {
     }
   };
 
+  const findNextUnscratchedTicketIndex = (): number | null => {
+    for (let i = currentTicketIndex + 1; i < tickets.length; i++) {
+      const ticketId = tickets[i].id;
+      const ticketData = ticketsData[ticketId];
+
+      if (
+        ticketData &&
+        Object.keys(ticketData.revealedNumbers).length <
+          ticketData.gridData.length
+      ) {
+        return i;
+      }
+    }
+
+    return null;
+  };
+
   const handleGameReset = () => {
     setNotificationState("none");
     resetGame();
+
+    const nextUnscratchedIndex = findNextUnscratchedTicketIndex();
+
+    if (nextUnscratchedIndex !== null) {
+      setTimeout(() => {
+        if (ticketData) {
+          setTicketsData((prev) => ({
+            ...prev,
+            [ticketData.id]: {
+              ...prev[ticketData.id],
+              revealedNumbers: { ...revealedNumbers },
+            },
+          }));
+        }
+
+        setCurrentTicketIndex(nextUnscratchedIndex);
+      }, 300); // for smoother transition -ts
+    } else {
+      setNotification(
+        "You've scratched all your tickets! Buy more to keep playing."
+      );
+    }
   };
 
   const resetGame = () => {
@@ -732,6 +764,11 @@ export default function PlayPage() {
     });
   };
 
+  // Function to dismiss notification
+  const dismissNotification = () => {
+    setNotification(null);
+  };
+
   useEffect(() => {
     if (notificationState !== "none") {
       document.body.style.overflow = "hidden";
@@ -749,7 +786,7 @@ export default function PlayPage() {
       }
     }
 
-    // Cleanup when component unmounts
+    // Cleanup
     return () => {
       document.body.style.overflow = "";
       document.body.style.position = "";
@@ -829,12 +866,6 @@ export default function PlayPage() {
         )}
 
         <div className="w-full max-w-md">
-          {notification && (
-            <div className="mb-6 p-4 bg-blue-100 rounded-lg text-center text-blue-700">
-              {notification}
-            </div>
-          )}
-
           <div className="flex justify-center gap-4">
             {validationResult && notificationState === "none" && (
               <button
@@ -845,6 +876,21 @@ export default function PlayPage() {
               </button>
             )}
           </div>
+
+          {notification && (
+            <div className="mb-6 p-4 bg-blue-100 rounded-lg text-center text-blue-700 relative">
+              {notification}
+              <button 
+                onClick={dismissNotification}
+                className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-blue-200 hover:bg-blue-300 transition-colors"
+                aria-label="Dismiss notification"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-700" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          )}
 
           {tickets.length > 1 && (
             <div className="flex justify-center gap-2 mt-4 mb-4">
