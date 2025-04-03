@@ -12,7 +12,7 @@ export const BuyTickets: React.FC<BuyTicketsProps> = ({ drawId, drawName, setTic
 
   const handlePurchase = async (numTickets: number) => {
     try {
-      const playerId = localStorage.getItem("playerId");
+      const playerId = typeof window !== 'undefined' ? localStorage.getItem("playerId") : null;
 
       const response = await fetch("/api/buy-tickets", {
         method: "POST",
