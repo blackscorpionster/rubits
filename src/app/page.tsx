@@ -34,6 +34,15 @@ const Home: React.FC = () => {
 			},
 		});
 
+		if (
+			!response ||
+			!response?.candidates ||
+			!response.candidates[0].content?.parts
+		) {
+			console.error("No response from AI");
+			return "";
+		}
+
 		for (const part of response.candidates[0].content.parts) {
 			// Based on the part type, either show the text or save the image
 			if (part.text) {
