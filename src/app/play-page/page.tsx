@@ -213,7 +213,7 @@ const NavigationArrows = ({
   disabled: boolean;
 }) => {
   return (
-    <div className="fixed inset-y-0 left-0 right-0 pointer-events-none flex items-center justify-between px-2 z-30">
+    <div className="fixed inset-y-0 left-0 right-0 pointer-events-none flex items-center justify-between px-1 z-30">
       <button
         onClick={onPrev}
         className={`pointer-events-auto p-3 rounded-full bg-white/80 shadow-lg hover:bg-white transition-all duration-300 transform ${
@@ -226,7 +226,7 @@ const NavigationArrows = ({
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5 text-gray-800"
+          className="h-4 w-4 text-gray-800"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -251,7 +251,7 @@ const NavigationArrows = ({
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5 text-gray-800"
+          className="h-4 w-4 text-gray-800"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -302,24 +302,19 @@ const TicketCarousel = ({
               className="min-w-full flex justify-center items-center"
             >
               <div className="flex flex-col items-center">
-                <div className="text-center mb-4">
-                  <div className="text-xs text-gray-400 p-1 rounded">
-                    <p>Dev Mode: {ticket.draw.name}</p>
-                    <p>ID: {ticket.id}</p>
-                    <p>Draw: {ticket.drawId}</p>
-                  </div>
+                <div className="w-full max-w-[600px] min-w-[300px]">
+                  <ScratchGrid
+                    key={ticketDataInfo.gridKey}
+                    gridData={ticketDataInfo.gridData}
+                    onNumberRevealed={(id, value) => {
+                      console.log(
+                        `Revealing cell ${id} with value ${value} for ticket ${ticket.id}`
+                      );
+                      onNumberRevealed(ticket.id, id, value);
+                    }}
+                    preRevealedNumbers={ticketDataInfo.revealedNumbers}
+                  />
                 </div>
-                <ScratchGrid
-                  key={ticketDataInfo.gridKey}
-                  gridData={ticketDataInfo.gridData}
-                  onNumberRevealed={(id, value) => {
-                    console.log(
-                      `Revealing cell ${id} with value ${value} for ticket ${ticket.id}`
-                    );
-                    onNumberRevealed(ticket.id, id, value);
-                  }}
-                  preRevealedNumbers={ticketDataInfo.revealedNumbers}
-                />
               </div>
             </div>
           );
@@ -364,65 +359,70 @@ export default function PlayPage() {
   const router = useRouter();
 
   const handleReloadTickets = (reloadTickets: boolean) => {
-    setReloadTickets(reloadTickets)
-  }
+    setReloadTickets(reloadTickets);
+  };
 
   const fetchTicketData = async () => {
-  try {
-    setLoading(true);
-    const playerId = localStorage.getItem("playerId");
-    const response = await fetch(`/api/ticket?playerId=${encodeURIComponent(playerId ?? "")}&ticketStatus=intact`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    try {
+      setLoading(true);
+      const playerId = localStorage.getItem("playerId");
+      const response = await fetch(
+        `/api/ticket?playerId=${encodeURIComponent(
+          playerId ?? ""
+        )}&ticketStatus=intact`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-    const ticketsJson = await response.json();
+      const ticketsJson = await response.json();
 
-    if (ticketsJson?.tickets?.length > 0) {
-      const allTickets: Ticket[] = ticketsJson.tickets.map((ticket: any) => ({
-        id: ticket.id,
-        drawId: ticket.drawId,
-        gridElements: ticket.gridElements,
-        md5: ticket.md5,
-        status: ticket.status,
-        tierId: ticket.tierId,
-        position: ticket.position,
-        dateCreated: ticket.dateCreated,
-        purchasedBy: ticket.purchasedBy,
-        draw: {
-          id: ticket.draw.id,
-          name: ticket.draw.name,
-          numberOfTickets: ticket.draw.numberOfTickets,
-          ticketCost: ticket.draw.ticketCost,
-          profitPercent: ticket.draw.profitPercent,
-          gridSizeX: ticket.draw.gridSizeX,
-          gridSizeY: ticket.draw.gridSizeY,
-          matchingTilesToWin: ticket.draw.matchingTilesToWin,
-          tilesTheme: ticket.draw.tilesTheme,
-        },
-      }));
-      setTickets(allTickets);
+      if (ticketsJson?.tickets?.length > 0) {
+        const allTickets: Ticket[] = ticketsJson.tickets.map((ticket: any) => ({
+          id: ticket.id,
+          drawId: ticket.drawId,
+          gridElements: ticket.gridElements,
+          md5: ticket.md5,
+          status: ticket.status,
+          tierId: ticket.tierId,
+          position: ticket.position,
+          dateCreated: ticket.dateCreated,
+          purchasedBy: ticket.purchasedBy,
+          draw: {
+            id: ticket.draw.id,
+            name: ticket.draw.name,
+            numberOfTickets: ticket.draw.numberOfTickets,
+            ticketCost: ticket.draw.ticketCost,
+            profitPercent: ticket.draw.profitPercent,
+            gridSizeX: ticket.draw.gridSizeX,
+            gridSizeY: ticket.draw.gridSizeY,
+            matchingTilesToWin: ticket.draw.matchingTilesToWin,
+            tilesTheme: ticket.draw.tilesTheme,
+          },
+        }));
+        setTickets(allTickets);
 
-      setTicketData(allTickets[0]);
+        setTicketData(allTickets[0]);
 
-      const initialTicketsData = initializeTicketData(allTickets);
-      setTicketsData(initialTicketsData);
+        const initialTicketsData = initializeTicketData(allTickets);
+        setTicketsData(initialTicketsData);
 
-      setGridData(initialTicketsData[allTickets[0].id].gridData);
-    } else {
-      setTickets([]);
-      setTicketData(null);
-      setGridData([]);
+        setGridData(initialTicketsData[allTickets[0].id].gridData);
+      } else {
+        setTickets([]);
+        setTicketData(null);
+        setGridData([]);
+      }
+    } catch (err) {
+      console.error("Error fetching ticket data:", err);
+      setError("Error connecting to server");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("Error fetching ticket data:", err);
-    setError("Error connecting to server");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     const playerId = localStorage.getItem("playerId");
