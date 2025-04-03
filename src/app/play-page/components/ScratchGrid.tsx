@@ -46,11 +46,6 @@ export const ScratchGrid: React.FC<ScratchGridProps> = ({
   const handleGridMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDrawing) return;
     
-    // Prevent scrolling when scratching - this is important for mobile
-    if ('touches' in e) {
-      e.preventDefault();
-    }
-    
     updateActiveCellFromEvent(e);
   };
 
