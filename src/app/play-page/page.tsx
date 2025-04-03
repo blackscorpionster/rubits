@@ -469,7 +469,7 @@ export default function PlayPage() {
   };
 
   useEffect(() => {
-    if (reloadTickets) { 
+    if (reloadTickets) {
       fetchTicketData();
       setReloadTickets(false);
     }
@@ -692,7 +692,6 @@ export default function PlayPage() {
         setError(result.message || "Validation failed");
         setNotificationState("none");
       }
-      setReloadTickets(true);
     } catch (err) {
       console.error("Error validating game:", err);
       setValidationResult({
@@ -750,6 +749,8 @@ export default function PlayPage() {
   };
 
   const resetGame = () => {
+    setReloadTickets(true);
+
     if (!ticketData) return;
 
     const ticketId = ticketData.id;
