@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ticketIds = availableTickets.map((ticket: Ticket) => ticket.id);
+    const ticketIds = availableTickets.map((ticket: any) => ticket.id);
 
     await prisma.ticket.updateMany({
       where: {
