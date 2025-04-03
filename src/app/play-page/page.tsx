@@ -817,8 +817,15 @@ export default function PlayPage() {
     );
   }
 
+  const customImage = localStorage.getItem("customImage");
+  const imageUrl = "data:image/png;base64," + customImage;
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-8">
+    <main className="flex min-h-screen flex-col items-center justify-between p-8" style={{
+		backgroundImage: "url(" + imageUrl + ")",
+		backgroundSize: "cover",
+		backgroundPosition: "center",
+		backgroundRepeat: "no-repeat",
+	}}>
       {notificationState === "readyToReveal" && (
         <ReadyToReveal onReveal={handleReveal} />
       )}
@@ -924,7 +931,7 @@ export default function PlayPage() {
 
       <button
         onClick={handleLogout}
-        className="fixed bottom-4 right-4 bg-gray-800/70 hover:bg-red-600/90 text-white rounded-full p-2 shadow-lg transition-all duration-300 hover:scale-110 border border-gray-700"
+        className="fixed bottom-4 right-4 bg-gray-800/70 hover:bg-red-600/90 text-white rounded-full p-2 shadow-lg transition-all duration-300 hover:scale-110 border border-gray-700 z-10"
         aria-label="Logout"
         title="Logout"
       >
