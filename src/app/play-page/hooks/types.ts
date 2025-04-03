@@ -6,6 +6,7 @@ export interface CanvasPosition {
 export interface ScratchCellRef {
   startDrawingExternal: (x: number, y: number) => void;
   drawExternal: (x: number, y: number) => void;
+  forceReveal: () => void;
 }
 
 export interface ScratchCanvasProps {

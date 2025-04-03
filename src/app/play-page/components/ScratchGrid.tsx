@@ -11,15 +11,18 @@ interface GridItem {
 interface ScratchGridProps {
   gridData: GridItem[];
   onNumberRevealed: (id: string, value: number) => void;
+  preRevealedNumbers?: Record<string, number>;
 }
 
 export const ScratchGrid: React.FC<ScratchGridProps> = ({
   gridData,
   onNumberRevealed,
+  preRevealedNumbers = {},
 }) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [activeCellId, setActiveCellId] = useState<string | null>(null);
+  const [revealedCells, setRevealedCells] = useState<Record<string, boolean>>({});
 
   // Refs to store references to child ScratchCell components
   const cellRefs = useRef<{ [id: string]: React.RefObject<any> }>({});
@@ -34,7 +37,29 @@ export const ScratchGrid: React.FC<ScratchGridProps> = ({
         cellRefs.current[item.id] = React.createRef();
       }
     });
-  }, [gridData]);
+
+    // Apply pre-revealed numbers
+    const initialRevealedCells: Record<string, boolean> = {};
+    Object.keys(preRevealedNumbers).forEach(id => {
+      initialRevealedCells[id] = true;
+    });
+    setRevealedCells(initialRevealedCells);
+    
+  }, [gridData, preRevealedNumbers]);
+
+  // Force reveal all pre-revealed cells
+  useEffect(() => {
+    // Small delay to ensure the ScratchCell components have mounted
+    const timer = setTimeout(() => {
+      Object.keys(preRevealedNumbers).forEach(id => {
+        if (cellRefs.current[id]?.current) {
+          cellRefs.current[id].current.forceReveal();
+        }
+      });
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [preRevealedNumbers]);
 
   // Start drawing on mouse down or touch start
   const handleGridMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
@@ -211,14 +236,22 @@ export const ScratchGrid: React.FC<ScratchGridProps> = ({
       return null;
     }
 
+    const isPreRevealed = Boolean(preRevealedNumbers[cell.id]);
+
     return (
       <ScratchCell
         id={cell.id}
         value={cell.value}
         backgroundImage={backgroundImage}
-        onRevealed={() => onNumberRevealed(cell.id, cell.value)}
+        onRevealed={() => {
+          if (!revealedCells[cell.id]) {
+            setRevealedCells(prev => ({ ...prev, [cell.id]: true }));
+            onNumberRevealed(cell.id, cell.value);
+          }
+        }}
         ref={cellRefs.current[cell.id]}
         externalDrawing={true}
+        isPreRevealed={isPreRevealed}
       />
     );
   }

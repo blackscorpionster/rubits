@@ -199,8 +199,163 @@ const BetterLuckNextTime = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
+// Navigation arrows component
+const NavigationArrows = ({
+  onPrev,
+  onNext,
+  hasPrev,
+  hasNext,
+  disabled,
+}: {
+  onPrev: () => void;
+  onNext: () => void;
+  hasPrev: boolean;
+  hasNext: boolean;
+  disabled: boolean;
+}) => {
+  return (
+    <div className="fixed inset-y-0 left-0 right-0 pointer-events-none flex items-center justify-between px-4 z-30">
+      <button
+        onClick={onPrev}
+        className={`pointer-events-auto p-3 rounded-full bg-white/80 shadow-lg hover:bg-white transition-all duration-300 transform ${
+          hasPrev && !disabled
+            ? "opacity-100 hover:scale-110"
+            : "opacity-0 cursor-default"
+        }`}
+        disabled={!hasPrev || disabled}
+        aria-label="Previous ticket"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6 text-gray-800"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+      </button>
+      <button
+        onClick={onNext}
+        className={`pointer-events-auto p-3 rounded-full bg-white/80 shadow-lg hover:bg-white transition-all duration-300 transform ${
+          hasNext && !disabled
+            ? "opacity-100 hover:scale-110"
+            : "opacity-0 cursor-default"
+        }`}
+        disabled={!hasNext || disabled}
+        aria-label="Next ticket"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6 text-gray-800"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+  );
+};
+
+// Ticket Carousel component
+const TicketCarousel = ({
+  tickets,
+  currentIndex,
+  ticketsData,
+  onNumberRevealed,
+}: {
+  tickets: Ticket[];
+  currentIndex: number;
+  ticketsData: Record<
+    string,
+    {
+      gridData: GridItem[];
+      gridKey: string;
+      revealedNumbers: Record<string, number>;
+    }
+  >;
+  onNumberRevealed: (ticketId: string, id: string, value: number) => void;
+}) => {
+  return (
+    <div className="overflow-hidden w-full">
+      <div
+        className="flex transition-transform duration-500 ease-in-out"
+        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+      >
+        {tickets.map((ticket, index) => {
+          const ticketDataInfo = ticketsData[ticket.id];
+          if (!ticketDataInfo) {
+            console.warn(`No data found for ticket ${ticket.id}`);
+            return null;
+          }
+
+          return (
+            <div
+              key={ticket.id}
+              className="min-w-full flex justify-center items-center"
+            >
+              <div className="flex flex-col items-center">
+                <div className="text-center mb-4">
+                  <div className="text-xs text-gray-400 p-1 rounded">
+                    <p>Dev Mode: {ticket.draw.name}</p>
+                    <p>ID: {ticket.id}</p>
+                    <p>Draw: {ticket.drawId}</p>
+                    <p className="text-sm font-semibold text-indigo-600">
+                      Ticket {index + 1} of {tickets.length}
+                    </p>
+                    {/* Debug info */}
+                    <p className="text-gray-500 text-xs">
+                      Revealed:{" "}
+                      {Object.keys(ticketDataInfo.revealedNumbers).length}/
+                      {ticketDataInfo.gridData.length}
+                    </p>
+                  </div>
+                </div>
+                <ScratchGrid
+                  key={ticketDataInfo.gridKey}
+                  gridData={ticketDataInfo.gridData}
+                  onNumberRevealed={(id, value) => {
+                    console.log(
+                      `Revealing cell ${id} with value ${value} for ticket ${ticket.id}`
+                    );
+                    onNumberRevealed(ticket.id, id, value);
+                  }}
+                  preRevealedNumbers={ticketDataInfo.revealedNumbers}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 // TODO: Add an image generated from AI here? Hamish on it...
 export default function PlayPage() {
+  // Multiple tickets management
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [currentTicketIndex, setCurrentTicketIndex] = useState(0);
+  const [ticketsData, setTicketsData] = useState<
+    Record<
+      string,
+      {
+        gridData: GridItem[];
+        gridKey: string;
+        revealedNumbers: Record<string, number>;
+      }
+    >
+  >({});
+
+  // Single ticket state (for the current ticket)
   const [revealedNumbers, setRevealedNumbers] = useState<
     Record<string, number>
   >({});
@@ -215,10 +370,6 @@ export default function PlayPage() {
   const [notificationState, setNotificationState] = useState<
     "none" | "readyToReveal" | "transitioning" | "winning" | "losing"
   >("none");
-  const [showWinningAlert, setShowWinningAlert] = useState(false);
-  const [showLosingAlert, setShowLosingAlert] = useState(false);
-  const [showReadyToReveal, setShowReadyToReveal] = useState(false);
-  const [gridKey, setGridKey] = useState<string>("initial");
   const [playerId, setPlayerId] = useState<string | null>(null);
   const router = useRouter();
 
@@ -238,6 +389,63 @@ export default function PlayPage() {
     router.push("/");
   };
 
+  // Helper to create mock tickets for testing
+  const createMockTickets = (realTicket: Ticket, count: number): Ticket[] => {
+    const mockTickets = [realTicket];
+
+    for (let i = 1; i < count; i++) {
+      const originalGrid = [...realTicket.gridElements];
+      let modifiedGrid: number[];
+
+      if (i === 1) {
+        modifiedGrid = originalGrid.map((val, idx) =>
+          idx % 3 === 0 ? 10 : val
+        );
+      }
+      else {
+        modifiedGrid = [...originalGrid].sort(() => Math.random() - 0.5);
+      }
+
+      const mockTicket: Ticket = {
+        ...realTicket,
+        id: `mock-ticket-${i}`,
+        gridElements: modifiedGrid,
+      };
+
+      mockTickets.push(mockTicket);
+    }
+
+    return mockTickets;
+  };
+
+  // Initialize ticket data for all tickets
+  const initializeTicketData = (tickets: Ticket[]) => {
+    const newTicketsData: Record<
+      string,
+      {
+        gridData: GridItem[];
+        gridKey: string;
+        revealedNumbers: Record<string, number>;
+      }
+    > = {};
+
+    tickets.forEach((ticket) => {
+      const formattedGridData = createGridDataFromArray(
+        ticket.gridElements,
+        ticket.draw.gridSizeX,
+        ticket.draw.gridSizeY
+      );
+
+      newTicketsData[ticket.id] = {
+        gridData: formattedGridData,
+        gridKey: `grid-${ticket.id}-${Date.now()}`,
+        revealedNumbers: {},
+      };
+    });
+
+    return newTicketsData;
+  };
+
   // Fetch ticket data from the real database API
   useEffect(() => {
     const fetchTicketData = async () => {
@@ -247,15 +455,15 @@ export default function PlayPage() {
         const ticket = await response.json();
 
         if (ticket) {
-          setTicketData(ticket);
+          const allTickets = createMockTickets(ticket, 3);
+          setTickets(allTickets);
 
-          // Convert the array of numbers to the GridItem format needed by the ScratchGrid
-          const formattedGridData = createGridDataFromArray(
-            ticket.gridElements,
-            ticket.draw.gridSizeX,
-            ticket.draw.gridSizeY
-          );
-          setGridData(formattedGridData);
+          setTicketData(allTickets[0]);
+
+          const initialTicketsData = initializeTicketData(allTickets);
+          setTicketsData(initialTicketsData);
+
+          setGridData(initialTicketsData[allTickets[0].id].gridData);
         } else {
           setError("No ticket found");
         }
@@ -269,6 +477,42 @@ export default function PlayPage() {
 
     fetchTicketData();
   }, []);
+
+  // Update current ticket data when changing tickets
+  useEffect(() => {
+    if (
+      tickets.length > 0 &&
+      currentTicketIndex >= 0 &&
+      currentTicketIndex < tickets.length
+    ) {
+      const currentTicket = tickets[currentTicketIndex];
+      setTicketData(currentTicket);
+
+      if (ticketsData[currentTicket.id]) {
+        // Update the current grid data and revealed numbers
+        setGridData(ticketsData[currentTicket.id].gridData);
+        setRevealedNumbers(ticketsData[currentTicket.id].revealedNumbers);
+
+        // Check if all numbers for this ticket are already revealed to determine notification state
+        const currentTicketData = ticketsData[currentTicket.id];
+        const allRevealed =
+          Object.keys(currentTicketData.revealedNumbers).length >=
+          currentTicketData.gridData.length;
+
+        // Set notification state based on reveal status, only if currently in "none" state
+        if (allRevealed && notificationState === "none") {
+          console.log(
+            "All cells already revealed on navigation, showing notification"
+          );
+          setNotificationState("readyToReveal");
+        } else if (!allRevealed) {
+          // Only reset notification if cells aren't all revealed
+          setNotificationState("none");
+          setValidationResult(null);
+        }
+      }
+    }
+  }, [currentTicketIndex, tickets, ticketsData]);
 
   // Convert the array of numbers to the format needed by the ScratchGrid
   const createGridDataFromArray = (
@@ -286,44 +530,161 @@ export default function PlayPage() {
     });
   };
 
-  const handleNumberRevealed = (id: string, value: number) => {
-    setRevealedNumbers((prev: Record<string, number>) => {
+  // Handle navigation between tickets
+  const goToNextTicket = () => {
+    if (currentTicketIndex < tickets.length - 1) {
+      // Save current ticket in local state before switching
+      if (ticketData) {
+        setTicketsData((prev) => ({
+          ...prev,
+          [ticketData.id]: {
+            ...prev[ticketData.id],
+            revealedNumbers: { ...revealedNumbers },
+          },
+        }));
+      }
+
+      setCurrentTicketIndex(currentTicketIndex + 1);
+    }
+  };
+
+  const goToPrevTicket = () => {
+    if (currentTicketIndex > 0) {
+      // Save current ticket state before switching
+      if (ticketData) {
+        setTicketsData((prev) => ({
+          ...prev,
+          [ticketData.id]: {
+            ...prev[ticketData.id],
+            revealedNumbers: { ...revealedNumbers },
+          },
+        }));
+      }
+
+      setCurrentTicketIndex(currentTicketIndex - 1);
+    }
+  };
+
+  const handleNumberRevealed = (
+    ticketId: string,
+    id: string,
+    value: number
+  ) => {
+    setTicketsData((prev) => {
+      const ticketData = prev[ticketId];
+      if (!ticketData) return prev;
+
       const newRevealedNumbers = {
-        ...prev,
+        ...ticketData.revealedNumbers,
         [id]: value,
       };
 
-      if (Object.keys(newRevealedNumbers).length === gridData.length) {
-        setNotificationState("readyToReveal");
+      if (ticketId === tickets[currentTicketIndex]?.id) {
+        setRevealedNumbers(newRevealedNumbers);
+
+        // Check if all numbers are revealed for the current ticket
+        // Log to debug
+        console.log(
+          `Revealed: ${Object.keys(newRevealedNumbers).length}, Total: ${
+            ticketData.gridData.length
+          }`
+        );
+
+        // Use the ticket's grid data length instead of the global gridData
+        if (
+          Object.keys(newRevealedNumbers).length >= ticketData.gridData.length
+        ) {
+          console.log("All cells revealed, showing notification");
+          setNotificationState("readyToReveal");
+        }
       }
 
-      return newRevealedNumbers;
+      return {
+        ...prev,
+        [ticketId]: {
+          ...ticketData,
+          revealedNumbers: newRevealedNumbers,
+        },
+      };
     });
   };
 
   const handleReveal = () => {
     setNotificationState("transitioning");
 
-    // Validate the game result
     handleValidateGame();
   };
 
   const handleValidateGame = async () => {
+    if (!ticketData) return;
+
     try {
       setSubmitting(true);
       setValidationResult(null);
 
+      const currentTicketId = ticketData.id;
+      const currentTicketData = ticketsData[currentTicketId];
+
+      if (!currentTicketData) {
+        console.error("No ticket data found for validation");
+        setNotificationState("none");
+        setSubmitting(false);
+        return;
+      }
+
+      const currentRevealedNumbers = currentTicketData.revealedNumbers;
+
+      console.log(
+        "Validating game with revealed numbers:",
+        Object.keys(currentRevealedNumbers).length
+      );
+
+      if (currentTicketId.startsWith("mock-")) {
+        console.log("Validating mock ticket", currentTicketId);
+
+        const valueFrequency: Record<number, number> = {};
+        Object.values(currentRevealedNumbers).forEach((value) => {
+          valueFrequency[value] = (valueFrequency[value] || 0) + 1;
+        });
+
+        const matchingTilesToWin = ticketData.draw.matchingTilesToWin || 3;
+        const maxMatches = Math.max(...Object.values(valueFrequency));
+        const isWinning = maxMatches >= matchingTilesToWin;
+
+        const mockResult: ValidationResult = {
+          success: true,
+          valid: true,
+          won: isWinning,
+          prize: isWinning ? `$${Math.floor(Math.random() * 100) + 10}` : null,
+        };
+
+        console.log("Mock validation result:", mockResult);
+        setValidationResult(mockResult);
+
+        if (mockResult.won) {
+          setNotificationState("winning");
+          playWinSound();
+        } else {
+          setNotificationState("losing");
+        }
+
+        setSubmitting(false);
+        return;
+      }
+
+      // Regular API validation for real tickets
       const response = await fetch("/api/validate-game", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          revealedNumbers,
+          revealedNumbers: currentRevealedNumbers,
           ticket: ticketData,
           matchingTilesToWin: ticketData?.draw.matchingTilesToWin || 3,
         }),
       });
 
       const result = await response.json();
+      console.log("Validation result:", result);
       setValidationResult(result);
 
       if (result.success) {
@@ -356,47 +717,38 @@ export default function PlayPage() {
   };
 
   const resetGame = () => {
+    if (!ticketData) return;
+
+    const ticketId = ticketData.id;
+
     setRevealedNumbers({});
     setValidationResult(null);
-    // Fetch a new ticket from the database
-    const fetchNewTicket = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch("/api/ticket");
-        const ticket = await response.json();
 
-        if (ticket) {
-          setTicketData(ticket);
-          const formattedGridData = createGridDataFromArray(
-            ticket.gridElements,
-            ticket.draw.gridSizeX,
-            ticket.draw.gridSizeY
-          );
-          setGridData(formattedGridData);
-        } else {
-          setError("No ticket found");
-        }
-      } catch (err) {
-        console.error("Error fetching new ticket:", err);
-        setError("Failed to get a new ticket");
-      } finally {
-        setLoading(false);
-      }
-    };
+    const newGridKey = `grid-${ticketId}-${Date.now()}`;
 
-    fetchNewTicket();
-    setGridKey(`grid-${Date.now()}`);
+    setTicketsData((prev) => {
+      const updatedTicketsData = {
+        ...prev,
+        [ticketId]: {
+          ...prev[ticketId],
+          revealedNumbers: {},
+          gridKey: newGridKey,
+        },
+      };
+
+      setGridData([...updatedTicketsData[ticketId].gridData]);
+
+      return updatedTicketsData;
+    });
   };
 
   useEffect(() => {
-    // Prevent scrolling when notifications are shown
     if (notificationState !== "none") {
       document.body.style.overflow = "hidden";
       document.body.style.position = "fixed";
       document.body.style.width = "100%";
       document.body.style.top = `-${window.scrollY}px`;
     } else {
-      // Re-enable scrolling when notifications are hidden
       const scrollY = document.body.style.top;
       document.body.style.overflow = "";
       document.body.style.position = "";
@@ -407,8 +759,8 @@ export default function PlayPage() {
       }
     }
 
+    // Cleanup when component unmounts
     return () => {
-      // Cleanup when component unmounts
       document.body.style.overflow = "";
       document.body.style.position = "";
       document.body.style.width = "";
@@ -455,30 +807,36 @@ export default function PlayPage() {
         <BetterLuckNextTime onClose={handleGameReset} />
       )}
 
-      <div className="z-10 max-w-5xl w-full flex flex-col items-center gap-8">
+      {tickets.length > 1 && (
+        <NavigationArrows
+          onPrev={goToPrevTicket}
+          onNext={goToNextTicket}
+          hasPrev={currentTicketIndex > 0}
+          hasNext={currentTicketIndex < tickets.length - 1}
+          disabled={notificationState !== "none"}
+        />
+      )}
+
+      <div className="z-10 max-w-5xl w-full flex flex-col items-center gap-4">
         <h1 className="font-lacquer text-4xl md:text-5xl font-normal text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 transform rotate-1 tracking-wider shadow-lg">
           Jumbo's JumBucks
         </h1>
 
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-
-        {!ticketData && <NoTickets />}
-
-        {ticketData && (
-          <div className="text-center">
-            <div className="text-xs text-gray-400 p-1 rounded">
-              <p>Dev Mode: {ticketData.draw.name}</p>
-              <p>ID: {ticketData.id}</p>
-              <p>Draw: {ticketData.drawId}</p>
-            </div>
-          </div>
+        {/* Only show errors that aren't related to mock tickets */}
+        {error && !error.includes("Invalid ticket") && (
+          <p className="text-red-500 mb-4">{error}</p>
         )}
 
-        <ScratchGrid
-          key={gridKey}
-          gridData={gridData}
-          onNumberRevealed={handleNumberRevealed}
-        />
+        {tickets.length === 0 && <NoTickets />}
+
+        {tickets.length > 0 && (
+          <TicketCarousel
+            tickets={tickets}
+            currentIndex={currentTicketIndex}
+            ticketsData={ticketsData}
+            onNumberRevealed={handleNumberRevealed}
+          />
+        )}
 
         <div className="w-full max-w-md">
           {notification && (
@@ -498,6 +856,30 @@ export default function PlayPage() {
             )}
           </div>
 
+          {tickets.length > 1 && (
+            <div className="flex justify-center gap-2 mt-4 mb-4">
+              {tickets.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() =>
+                    notificationState === "none" && setCurrentTicketIndex(index)
+                  }
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    index === currentTicketIndex
+                      ? "bg-pink-500 scale-125"
+                      : "bg-gray-300 hover:bg-gray-400"
+                  } ${
+                    notificationState !== "none"
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                  disabled={notificationState !== "none"}
+                  aria-label={`Go to ticket ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
+
           <div>
             <BuyTicketsContainer />
           </div>
@@ -510,8 +892,19 @@ export default function PlayPage() {
         aria-label="Logout"
         title="Logout"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+          />
         </svg>
       </button>
     </main>

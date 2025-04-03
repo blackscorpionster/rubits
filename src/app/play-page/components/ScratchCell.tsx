@@ -1,6 +1,6 @@
 "use client";
 
-import React, { forwardRef } from "react";
+import React, { forwardRef, useEffect } from "react";
 import {
   ScratchCellRef,
   useScratchCanvas,
@@ -16,6 +16,7 @@ interface ScratchCellProps {
   backgroundSize?: string;
   onRevealed: () => void;
   externalDrawing?: boolean;
+  isPreRevealed?: boolean;
 }
 
 export const ScratchCell = forwardRef<ScratchCellRef, ScratchCellProps>(
@@ -28,6 +29,7 @@ export const ScratchCell = forwardRef<ScratchCellRef, ScratchCellProps>(
       backgroundSize = "cover",
       onRevealed,
       externalDrawing = false,
+      isPreRevealed = false,
     },
     ref
   ) => {
@@ -42,6 +44,7 @@ export const ScratchCell = forwardRef<ScratchCellRef, ScratchCellProps>(
       lastPosition,
       updateScratchedArea,
       drawScratchLine,
+      forceReveal,
     } = useScratchCanvas({
       revealThreshold,
       onRevealed,
@@ -64,7 +67,15 @@ export const ScratchCell = forwardRef<ScratchCellRef, ScratchCellProps>(
       lastPosition,
       updateScratchedArea,
       drawScratchLine,
+      forceReveal,
     });
+
+    // Force reveal if isPreRevealed is true
+    useEffect(() => {
+      if (isPreRevealed && canvasInitialized && !isRevealed) {
+        forceReveal();
+      }
+    }, [isPreRevealed, canvasInitialized, isRevealed, forceReveal]);
 
     return (
       <div
