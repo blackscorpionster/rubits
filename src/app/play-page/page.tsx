@@ -820,12 +820,12 @@ export default function PlayPage() {
   const customImage = localStorage.getItem("customImage");
   const imageUrl = "data:image/png;base64," + customImage;
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-8" style={{
-		backgroundImage: "url(" + imageUrl + ")",
-		backgroundSize: "cover",
-		backgroundPosition: "center",
-		backgroundRepeat: "no-repeat",
-	}}>
+    <main
+      className="flex min-h-screen flex-col items-center justify-between p-8"
+      style={{
+        backgroundColor: "#1D2B53", // A nice dark blue that will complement most images
+      }}
+    >
       {notificationState === "readyToReveal" && (
         <ReadyToReveal onReveal={handleReveal} />
       )}
@@ -887,13 +887,22 @@ export default function PlayPage() {
           {notification && (
             <div className="mb-6 p-4 bg-blue-100 rounded-lg text-center text-blue-700 relative">
               {notification}
-              <button 
+              <button
                 onClick={dismissNotification}
                 className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-blue-200 hover:bg-blue-300 transition-colors"
                 aria-label="Dismiss notification"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-700" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 text-blue-700"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </button>
             </div>

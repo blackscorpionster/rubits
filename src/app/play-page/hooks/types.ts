@@ -13,6 +13,7 @@ export interface ScratchCanvasProps {
   revealThreshold: number;
   onRevealed: () => void;
   scratchRadius: number;
+  cellPosition?: string; // ID of the cell (e.g. "0-1") to determine which part of the image to use
 }
 
 export type CanvasRefType = React.RefObject<HTMLCanvasElement>;
