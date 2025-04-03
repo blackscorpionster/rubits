@@ -5,15 +5,18 @@ export const useScratchCanvas = ({
   revealThreshold,
   onRevealed,
   scratchRadius,
+  cellPosition,
 }: ScratchCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null) as CanvasRefType;
   const [isRevealed, setIsRevealed] = useState(false);
   const [percentScratched, setPercentScratched] = useState(0);
   const [canvasInitialized, setCanvasInitialized] = useState(false);
-  
+
   // Store the image data to restore after scroll
   const imageDataRef = useRef<ImageData | null>(null);
-  const canvasDimensionsRef = useRef<{width: number, height: number} | null>(null);
+  const canvasDimensionsRef = useRef<{ width: number; height: number } | null>(
+    null
+  );
 
   const gridSize = 20;
   const scratchGrid = useRef<boolean[][]>([]);
@@ -25,12 +28,13 @@ export const useScratchCanvas = ({
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    
+
     // Only reinitialize if dimensions changed or not initialized yet
-    const needsInit = !canvasDimensionsRef.current || 
-      canvasDimensionsRef.current.width !== rect.width || 
+    const needsInit =
+      !canvasDimensionsRef.current ||
+      canvasDimensionsRef.current.width !== rect.width ||
       canvasDimensionsRef.current.height !== rect.height;
-      
+
     if (needsInit) {
       canvas.width = rect.width;
       canvas.height = rect.height;
@@ -48,15 +52,54 @@ export const useScratchCanvas = ({
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = "rgba(227, 61, 148, 1)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const customImage =
+        typeof window !== "undefined"
+          ? localStorage.getItem("customImage")
+          : null;
 
-      ctx.globalCompositeOperation = "destination-out";
-      
-      setCanvasInitialized(true);
+      if (customImage && cellPosition) {
+        const img = new Image();
+        img.onload = () => {
+          const [row, col] = cellPosition.split("-").map(Number);
+
+          const sectionWidth = img.width / 3;
+          const sectionHeight = img.height / 3;
+
+          const srcX = col * sectionWidth;
+          const srcY = row * sectionHeight;
+
+          ctx.drawImage(
+            img,
+            srcX,
+            srcY,
+            sectionWidth,
+            sectionHeight,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+
+          ctx.globalCompositeOperation = "destination-out";
+          setCanvasInitialized(true);
+        };
+        img.onerror = () => {
+          ctx.fillStyle = "rgba(227, 61, 148, 1)";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.globalCompositeOperation = "destination-out";
+          setCanvasInitialized(true);
+        };
+        img.src = "data:image/png;base64," + customImage;
+      } else {
+        // Use default pink overlay
+        ctx.fillStyle = "rgba(227, 61, 148, 1)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = "destination-out";
+        setCanvasInitialized(true);
+      }
+
       imageDataRef.current = null;
     } else if (imageDataRef.current) {
-      // Restore the previous state after a scroll
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.putImageData(imageDataRef.current, 0, 0);
@@ -65,16 +108,20 @@ export const useScratchCanvas = ({
     }
   };
 
-  // Save the canvas state to restore after scroll events
   const saveCanvasState = () => {
     const canvas = canvasRef.current;
     if (!canvas || !canvasInitialized) return;
-    
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    
+
     try {
-      imageDataRef.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      imageDataRef.current = ctx.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
     } catch (e) {
       console.error("Failed to save canvas state:", e);
     }
@@ -134,7 +181,7 @@ export const useScratchCanvas = ({
       setIsRevealed(true);
       onRevealed();
     }
-    
+
     // Save the canvas state after each scratch operation
     saveCanvasState();
   };
@@ -143,28 +190,28 @@ export const useScratchCanvas = ({
   const forceReveal = () => {
     const canvas = canvasRef.current;
     if (!canvas || isRevealed) return;
-    
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     // Clear the entire canvas to reveal the number
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
+
     // Mark all grid cells as scratched
     for (let y = 0; y < gridSize; y++) {
       for (let x = 0; x < gridSize; x++) {
         scratchGrid.current[y][x] = true;
       }
     }
-    
+
     setPercentScratched(100);
-    
+
     // Only trigger the onRevealed callback if not already revealed
     if (!isRevealed) {
       setIsRevealed(true);
       onRevealed();
     }
-    
+
     // Save the fully revealed state
     saveCanvasState();
   };
@@ -209,8 +256,8 @@ export const useScratchCanvas = ({
 
     // Only handle real resize events, not scroll-induced repaints
     window.addEventListener("resize", handleResize);
-    
-    // Fix for scroll issues on mobile - capture scroll events 
+
+    // Fix for scroll issues on mobile - capture scroll events
     // and prevent reinitializing the canvas
     const handleScroll = () => {
       if (imageDataRef.current) {
@@ -218,7 +265,7 @@ export const useScratchCanvas = ({
         requestAnimationFrame(() => {
           const canvas = canvasRef.current;
           if (!canvas) return;
-          
+
           const ctx = canvas.getContext("2d");
           if (ctx && imageDataRef.current) {
             ctx.putImageData(imageDataRef.current, 0, 0);
@@ -227,7 +274,7 @@ export const useScratchCanvas = ({
         });
       }
     };
-    
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("touchmove", saveCanvasState, { passive: true });
 

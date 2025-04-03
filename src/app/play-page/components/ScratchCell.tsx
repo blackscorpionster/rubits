@@ -49,6 +49,7 @@ export const ScratchCell = forwardRef<ScratchCellRef, ScratchCellProps>(
       revealThreshold,
       onRevealed,
       scratchRadius,
+      cellPosition: id,
     });
 
     const { startDrawing, draw, stopDrawing } = useEventHandlers({
