@@ -759,27 +759,33 @@ export default function PlayPage() {
   };
 
   const findNextUnscratchedTicketIndex = (): number | null => {
+    // First search forward from current position
     for (let i = currentTicketIndex + 1; i < tickets.length; i++) {
-      const ticketId = tickets[i].id;
-      const ticketData = ticketsData[ticketId];
+      const ticket = tickets[i];
+      const ticketId = ticket.id;
+      const ticketDataInfo = ticketsData[ticketId];
 
       if (
-        ticketData &&
-        Object.keys(ticketData.revealedNumbers).length <
-          ticketData.gridData.length
+        ticketDataInfo &&
+        ticket.status !== "scratched" &&
+        Object.keys(ticketDataInfo.revealedNumbers).length <
+          ticketDataInfo.gridData.length
       ) {
         return i;
       }
     }
 
+    // Then search from beginning up to current position
     for (let i = 0; i < currentTicketIndex; i++) {
-      const ticketId = tickets[i].id;
-      const ticketData = ticketsData[ticketId];
+      const ticket = tickets[i];
+      const ticketId = ticket.id;
+      const ticketDataInfo = ticketsData[ticketId];
 
       if (
-        ticketData &&
-        Object.keys(ticketData.revealedNumbers).length <
-          ticketData.gridData.length
+        ticketDataInfo &&
+        ticket.status !== "scratched" &&
+        Object.keys(ticketDataInfo.revealedNumbers).length <
+          ticketDataInfo.gridData.length
       ) {
         return i;
       }
@@ -845,12 +851,19 @@ export default function PlayPage() {
       setCurrentTicketIndex(nextTicketIndex);
       resetCurrentTicket();
     } else {
-      // This is a fallback - we should never reach here if isLastTicket is working correctly
-      setTickets([]);
-      setTicketData(null);
-      setGridData([]);
-      setTicketsData({});
-      setReloadTickets(true);
+      // No more unscratched tickets found - reload the page
+      console.log("No more unscratched tickets found, reloading page");
+
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      } else {
+        // Fallback if window is not available (shouldn't happen)
+        setTickets([]);
+        setTicketData(null);
+        setGridData([]);
+        setTicketsData({});
+        setReloadTickets(true);
+      }
     }
   };
 
