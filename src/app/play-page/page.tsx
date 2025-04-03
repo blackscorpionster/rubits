@@ -499,7 +499,7 @@ export default function PlayPage() {
           </div>
 
           <div>
-            <BuyTickets />
+            <BuyTicketsContainer />
           </div>
         </div>
       </div>
