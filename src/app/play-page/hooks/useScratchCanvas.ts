@@ -10,6 +10,10 @@ export const useScratchCanvas = ({
   const [isRevealed, setIsRevealed] = useState(false);
   const [percentScratched, setPercentScratched] = useState(0);
   const [canvasInitialized, setCanvasInitialized] = useState(false);
+  
+  // Store the image data to restore after scroll
+  const imageDataRef = useRef<ImageData | null>(null);
+  const canvasDimensionsRef = useRef<{width: number, height: number} | null>(null);
 
   const gridSize = 20;
   const scratchGrid = useRef<boolean[][]>([]);
@@ -21,27 +25,59 @@ export const useScratchCanvas = ({
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
+    
+    // Only reinitialize if dimensions changed or not initialized yet
+    const needsInit = !canvasDimensionsRef.current || 
+      canvasDimensionsRef.current.width !== rect.width || 
+      canvasDimensionsRef.current.height !== rect.height;
+      
+    if (needsInit) {
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      canvasDimensionsRef.current = { width: rect.width, height: rect.height };
 
-    // Reset scratched area tracking - create a fresh grid
-    scratchGrid.current = Array(gridSize)
-      .fill(0)
-      .map(() => Array(gridSize).fill(false));
-    setPercentScratched(0);
-    setIsRevealed(false);
+      // Reset scratched area tracking - create a fresh grid
+      scratchGrid.current = Array(gridSize)
+        .fill(0)
+        .map(() => Array(gridSize).fill(false));
+      setPercentScratched(0);
+      setIsRevealed(false);
 
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "rgba(227, 61, 148, 1)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.globalCompositeOperation = "destination-out";
+      
+      setCanvasInitialized(true);
+      imageDataRef.current = null;
+    } else if (imageDataRef.current) {
+      // Restore the previous state after a scroll
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.putImageData(imageDataRef.current, 0, 0);
+        ctx.globalCompositeOperation = "destination-out";
+      }
+    }
+  };
+
+  // Save the canvas state to restore after scroll events
+  const saveCanvasState = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !canvasInitialized) return;
+    
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "rgba(227, 61, 148, 1)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.globalCompositeOperation = "destination-out";
-
-    setCanvasInitialized(true);
+    
+    try {
+      imageDataRef.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    } catch (e) {
+      console.error("Failed to save canvas state:", e);
+    }
   };
 
   const updateScratchedArea = (centerX: number, centerY: number) => {
@@ -98,6 +134,9 @@ export const useScratchCanvas = ({
       setIsRevealed(true);
       onRevealed();
     }
+    
+    // Save the canvas state after each scratch operation
+    saveCanvasState();
   };
 
   const drawScratchLine = (from: CanvasPosition, to: CanvasPosition) => {
@@ -133,13 +172,39 @@ export const useScratchCanvas = ({
 
   useEffect(() => {
     const handleResize = () => {
+      // Save state before resizing
+      saveCanvasState();
       initCanvas();
     };
 
+    // Only handle real resize events, not scroll-induced repaints
     window.addEventListener("resize", handleResize);
+    
+    // Fix for scroll issues on mobile - capture scroll events 
+    // and prevent reinitializing the canvas
+    const handleScroll = () => {
+      if (imageDataRef.current) {
+        // Use requestAnimationFrame to restore canvas state after the scroll
+        requestAnimationFrame(() => {
+          const canvas = canvasRef.current;
+          if (!canvas) return;
+          
+          const ctx = canvas.getContext("2d");
+          if (ctx && imageDataRef.current) {
+            ctx.putImageData(imageDataRef.current, 0, 0);
+            ctx.globalCompositeOperation = "destination-out";
+          }
+        });
+      }
+    };
+    
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("touchmove", saveCanvasState, { passive: true });
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("touchmove", saveCanvasState);
     };
   }, []);
 
