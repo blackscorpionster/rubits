@@ -55,6 +55,16 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
+		// Regardless of the prize, we need to close the ticket
+		await prisma.ticket.update({
+			where: {
+				id: ticketId,
+			},
+			data: {
+				status: "closed",
+			},
+		});
+
 		const prize = ticketPrize?.tier?.prize
 			? `Congratulations! You won $${`${ticketPrize?.tier?.prize}`}!`
 			: null;
