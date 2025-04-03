@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
         purchasedBy: null,
         status: "intact",
       },
+      include: { draw: true },
       take: numTickets,
     });
 
