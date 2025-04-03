@@ -9,7 +9,6 @@ interface ValidateGameRequest {
 	matchingTilesToWin?: number;
 }
 
-
 export async function POST(request: NextRequest) {
 	try {
 		const body: ValidateGameRequest = await request.json();
@@ -42,8 +41,19 @@ export async function POST(request: NextRequest) {
 			},
 			include: {
 				tier: true,
+				draw: true,
 			},
 		});
+
+		if (!ticketPrize) {
+			return NextResponse.json(
+				{
+					success: false,
+					message: "Invalid ticket, not found with the provided details",
+				},
+				{ status: 400 }
+			);
+		}
 
 		const prize = ticketPrize?.tier?.prize
 			? `Congratulations! You won $${`${ticketPrize?.tier?.prize}`}!`
@@ -51,7 +61,9 @@ export async function POST(request: NextRequest) {
 
 		return NextResponse.json({
 			success: !!ticketPrize,
-			valid: Object.keys(revealedNumbers).length === 9,
+			valid:
+				Object.keys(revealedNumbers).length ===
+				ticketPrize?.draw.gridSizeX * ticketPrize?.draw.gridSizeY,
 			won: !!ticketPrize?.tier,
 			prize,
 		});
