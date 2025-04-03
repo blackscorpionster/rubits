@@ -83,11 +83,9 @@ const Home: React.FC = () => {
 				player = await response.json();
 			}
 
-			// Only access localStorage on the client side
 			if (typeof window !== 'undefined') {
 				localStorage.setItem("playerId", player.id);
 				
-				// Generate image and store it in localStorage
 				try {
 					const base64Image = await generateImage(aiPrompt);
 					if (base64Image) {
