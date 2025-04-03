@@ -16,6 +16,27 @@ bun dev
 
 ## DB stuff
 
+If you want to connect your dev to the prod db
+Create a .env file
+```
+POSTGRES_PRISMA_URL="askanyonewwithenvfiles"
+POSTGRES_URL_NON_POOLING="askanyonewwithenvfiles"
+```
+
+Wand to use a different db?
+Get the database env
+```bash
+npm i -g vercel@latest
+vercel env pull .env
+vercel link
+```
+
+Update env to point to your local db
+```
+POSTGRES_PRISMA_URL="postgresql://postgres@db.jl.guillermod.dev.lan:5432/rubits"
+POSTGRES_URL_NON_POOLING="postgresql://postgres@db.jl.guillermod.dev.lan:5432/rubits"
+```
+
 If you make change to the prisma model, run:
 
 ```bash
