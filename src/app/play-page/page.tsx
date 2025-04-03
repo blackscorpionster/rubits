@@ -692,6 +692,7 @@ export default function PlayPage() {
         setError(result.message || "Validation failed");
         setNotificationState("none");
       }
+      setReloadTickets(true);
     } catch (err) {
       console.error("Error validating game:", err);
       setValidationResult({
@@ -883,21 +884,10 @@ export default function PlayPage() {
         )}
 
         <div className="w-full max-w-md">
-          <div className="flex justify-center gap-4">
-            {validationResult && notificationState === "none" && (
-              <button
-                onClick={resetGame}
-                className="px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-              >
-                Play Again
-              </button>
-            )}
-          </div>
-
           {notification && (
             <div className="mb-6 p-4 bg-blue-100 rounded-lg text-center text-blue-700 relative">
               {notification}
-              <button 
+              <button
                 onClick={dismissNotification}
                 className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-blue-200 hover:bg-blue-300 transition-colors"
                 aria-label="Dismiss notification"
