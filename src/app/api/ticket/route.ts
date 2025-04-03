@@ -4,68 +4,36 @@ import prisma from "../../../../lib/prisma";
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
-    const ticketId = url.searchParams.get("id");
+    const playerId = url.searchParams.get("playerId");
+    const ticketStatus = url.searchParams.get("ticketStatus");
 
-    let ticket;
-
-    if (ticketId) {
-      // If an ID is provided, fetch that specific ticket
-      ticket = await prisma.ticket.findUnique({
-        where: {
-          id: ticketId,
-        },
-        include: {
-          draw: true,
-        },
-      });
-
-      if (!ticket) {
-        return NextResponse.json(
-          { success: false, message: "Ticket not found" },
-          { status: 404 }
-        );
-      }
-    } else {
-      // Otherwise get a random available ticket
-      // First count available tickets to ensure we have some
-      const availableTicketsCount = await prisma.ticket.count({
-        where: {
-          purchasedBy: null,
-          status: "intact",
-        },
-      });
-
-      if (availableTicketsCount === 0) {
-        return NextResponse.json(
-          { success: false, message: "No available tickets" },
-          { status: 404 }
-        );
-      }
-
-      // Get a random ticket that hasn't been purchased
-      // Skip a random number of records
-      const skip = Math.floor(Math.random() * availableTicketsCount);
-
-      ticket = await prisma.ticket.findFirst({
-        where: {
-          purchasedBy: null,
-          status: "intact",
-        },
-        skip: skip,
-        take: 1,
-        include: {
-          draw: true,
-        },
-      });
+    if (!playerId) {
+      return NextResponse.json(
+        { success: false, message: "Player ID is required" },
+        { status: 400 }
+      );
     }
 
-    console.log("Ticket data:", ticket);
+    const tickets = await prisma.ticket.findMany({
+      where: {
+        purchasedBy: playerId,
+        ...(ticketStatus ? { status: ticketStatus } : {}),
+      },
+      include: {
+        draw: true,
+      },
+    });
 
-    return NextResponse.json(ticket);
+    return NextResponse.json({
+      success: true,
+      tickets,
+      count: tickets.length
+    });
+
   } catch (error) {
-    console.error("Error fetching ticket:", error);
+    console.error("Error fetching tickets:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch ticket" },
+      { success: false, message: "Failed to fetch tickets" },
       { status: 500 }
     );
   }

@@ -4,9 +4,10 @@ import { ErrorPopup } from "./ErrorPopup";
 interface BuyTicketsProps {
   drawId: string;
   drawName: string;
+  setTicketsPurchased: (purchased: boolean) => void;
 }
 
-export const BuyTickets: React.FC<BuyTicketsProps> = ({ drawId, drawName }) => {
+export const BuyTickets: React.FC<BuyTicketsProps> = ({ drawId, drawName, setTicketsPurchased }) => {
   const [error, setError] = useState<string | null>(null);
 
   const handlePurchase = async (numTickets: number) => {
@@ -25,8 +26,13 @@ export const BuyTickets: React.FC<BuyTicketsProps> = ({ drawId, drawName }) => {
         }),
       });
 
+        // Trigger ticket api to reload tickets in src/app/play-page/page.tsx
+        setTicketsPurchased(true);
+
       if (!response.ok) {
         setError("Error purchasing tickets");
+      } else {
+        console.log(`Successfully purchased ${numTickets} ticket(s) for draw ${drawId}`);
       }
 
       console.log(

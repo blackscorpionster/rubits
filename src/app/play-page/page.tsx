@@ -355,12 +355,74 @@ export default function PlayPage() {
   const [validationResult, setValidationResult] =
     useState<ValidationResult | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [reloadTickets, setReloadTickets] = useState(true);
   const [notification, setNotification] = useState<string | null>(null);
   const [notificationState, setNotificationState] = useState<
     "none" | "readyToReveal" | "transitioning" | "winning" | "losing"
   >("none");
   const [playerId, setPlayerId] = useState<string | null>(null);
   const router = useRouter();
+
+  const handleReloadTickets = (reloadTickets: boolean) => {
+    setReloadTickets(reloadTickets)
+  }
+
+  const fetchTicketData = async () => {
+  try {
+    setLoading(true);
+    const playerId = localStorage.getItem("playerId");
+    const response = await fetch(`/api/ticket?playerId=${encodeURIComponent(playerId ?? "")}&ticketStatus=intact`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const ticketsJson = await response.json();
+
+    if (ticketsJson?.tickets?.length > 0) {
+      const allTickets: Ticket[] = ticketsJson.tickets.map((ticket: any) => ({
+        id: ticket.id,
+        drawId: ticket.drawId,
+        gridElements: ticket.gridElements,
+        md5: ticket.md5,
+        status: ticket.status,
+        tierId: ticket.tierId,
+        position: ticket.position,
+        dateCreated: ticket.dateCreated,
+        purchasedBy: ticket.purchasedBy,
+        draw: {
+          id: ticket.draw.id,
+          name: ticket.draw.name,
+          numberOfTickets: ticket.draw.numberOfTickets,
+          ticketCost: ticket.draw.ticketCost,
+          profitPercent: ticket.draw.profitPercent,
+          gridSizeX: ticket.draw.gridSizeX,
+          gridSizeY: ticket.draw.gridSizeY,
+          matchingTilesToWin: ticket.draw.matchingTilesToWin,
+          tilesTheme: ticket.draw.tilesTheme,
+        },
+      }));
+      setTickets(allTickets);
+
+      setTicketData(allTickets[0]);
+
+      const initialTicketsData = initializeTicketData(allTickets);
+      setTicketsData(initialTicketsData);
+
+      setGridData(initialTicketsData[allTickets[0].id].gridData);
+    } else {
+      setTickets([]);
+      setTicketData(null);
+      setGridData([]);
+    }
+  } catch (err) {
+    console.error("Error fetching ticket data:", err);
+    setError("Error connecting to server");
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     const playerId = localStorage.getItem("playerId");
@@ -374,36 +436,9 @@ export default function PlayPage() {
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("userEmail");
+    localStorage.removeItem("customImage");
+    localStorage.removeItem("playerId");
     router.push("/");
-  };
-
-  const createMockTickets = (realTicket: Ticket, count: number): Ticket[] => {
-    const mockTickets = [realTicket];
-
-    // lol.
-    for (let i = 1; i < count; i++) {
-      const originalGrid = [...realTicket.gridElements];
-      let modifiedGrid: number[];
-
-      if (i === 1) {
-        modifiedGrid = originalGrid.map((val, idx) =>
-          idx % 3 === 0 ? 10 : val
-        );
-      } else {
-        modifiedGrid = [...originalGrid].sort(() => Math.random() - 0.5);
-      }
-
-      const mockTicket: Ticket = {
-        ...realTicket,
-        id: `mock-ticket-${i}`,
-        gridElements: modifiedGrid,
-      };
-
-      mockTickets.push(mockTicket);
-    }
-
-    return mockTickets;
   };
 
   const initializeTicketData = (tickets: Ticket[]) => {
@@ -433,37 +468,12 @@ export default function PlayPage() {
     return newTicketsData;
   };
 
-  // fetch actual ticket data from db -ts
   useEffect(() => {
-    const fetchTicketData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch("/api/ticket");
-        const ticket = await response.json();
-
-        if (ticket) {
-          const allTickets = createMockTickets(ticket, 3);
-          setTickets(allTickets);
-
-          setTicketData(allTickets[0]);
-
-          const initialTicketsData = initializeTicketData(allTickets);
-          setTicketsData(initialTicketsData);
-
-          setGridData(initialTicketsData[allTickets[0].id].gridData);
-        } else {
-          setError("No ticket found");
-        }
-      } catch (err) {
-        console.error("Error fetching ticket data:", err);
-        setError("Error connecting to server");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTicketData();
-  }, []);
+    if (reloadTickets) { 
+      fetchTicketData();
+      setReloadTickets(false);
+    }
+  }, [reloadTickets]);
 
   // update the current ticket when sliding between them -ts
   useEffect(() => {
@@ -924,7 +934,7 @@ export default function PlayPage() {
           )}
 
           <div>
-            <BuyTicketsContainer />
+            <BuyTicketsContainer setTicketsPurchased={handleReloadTickets} />
           </div>
         </div>
       </div>
