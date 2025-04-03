@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Ticket } from "../../play-page/types";
+
+export interface Ticket {
+  id: string;
+  drawId: string;
+  gridElements: number[];
+  md5: string;
+  status: string;
+  tierId: string;
+  position: number;
+  dateCreated: string;
+  purchasedBy: string | null;
+}
 
 export async function POST(request: NextRequest) {
   try {
