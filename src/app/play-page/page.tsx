@@ -308,15 +308,6 @@ const TicketCarousel = ({
                     <p>Dev Mode: {ticket.draw.name}</p>
                     <p>ID: {ticket.id}</p>
                     <p>Draw: {ticket.drawId}</p>
-                    <p className="text-sm font-semibold text-indigo-600">
-                      Ticket {index + 1} of {tickets.length}
-                    </p>
-                    {/* Debug info */}
-                    <p className="text-gray-500 text-xs">
-                      Revealed:{" "}
-                      {Object.keys(ticketDataInfo.revealedNumbers).length}/
-                      {ticketDataInfo.gridData.length}
-                    </p>
                   </div>
                 </div>
                 <ScratchGrid
@@ -401,8 +392,7 @@ export default function PlayPage() {
         modifiedGrid = originalGrid.map((val, idx) =>
           idx % 3 === 0 ? 10 : val
         );
-      }
-      else {
+      } else {
         modifiedGrid = [...originalGrid].sort(() => Math.random() - 0.5);
       }
 
