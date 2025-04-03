@@ -362,6 +362,46 @@ export default function PlayPage() {
   const [playerId, setPlayerId] = useState<string | null>(null);
   const router = useRouter();
 
+  const handleReloadTickets = (reloadTickets: boolean) => {
+    setReloadTickets(reloadTickets)
+  }
+
+  const fetchTicketData = async () => {
+    try {
+      setLoading(true);
+      const playerId = localStorage.getItem("playerId");
+      const response = await fetch(`/api/ticket?playerId=${encodeURIComponent(playerId ?? "")}&ticketStatus=intact`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const ticketsJson = await response.json();
+
+      if (ticketsJson?.tickets?.length > 0) {
+        const ticket = ticketsJson?.tickets[0];
+        setTicketData(ticket);
+
+        // Convert the array of numbers to the GridItem format needed by the ScratchGrid
+        const formattedGridData = createGridDataFromArray(
+          ticket.gridElements,
+          ticket.draw.gridSizeX,
+          ticket.draw.gridSizeY
+        );
+        setGridData(formattedGridData);
+      } else {
+        setTicketData(null);
+        setGridData([]);
+      }
+    } catch (err) {
+      console.error("Error fetching ticket data:", err);
+      setError("Error connecting to server");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const playerId = localStorage.getItem("playerId");
 
@@ -374,7 +414,7 @@ export default function PlayPage() {
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("userEmail");
+    localStorage.removeItem("playerId");
     router.push("/");
   };
 
@@ -924,7 +964,7 @@ export default function PlayPage() {
           )}
 
           <div>
-            <BuyTicketsContainer />
+            <BuyTicketsContainer setTicketsPurchased={handleReloadTickets} playerId={playerId ?? ""}/>
           </div>
         </div>
       </div>

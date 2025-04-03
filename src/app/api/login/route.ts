@@ -48,10 +48,7 @@ export async function POST(request: NextRequest) {
 
     console.log("New player created:", newPlayer);
 
-    return NextResponse.json({
-      success: true,
-      data: newPlayer,
-    });
+    return NextResponse.json(newPlayer);
   } catch (error) {
     console.error("Error creating player:", error);
     return NextResponse.json(
