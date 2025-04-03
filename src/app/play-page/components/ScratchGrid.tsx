@@ -45,6 +45,12 @@ export const ScratchGrid: React.FC<ScratchGridProps> = ({
   // Continue drawing on mouse move or touch move
   const handleGridMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDrawing) return;
+    
+    // Prevent scrolling when scratching - this is important for mobile
+    if ('touches' in e) {
+      e.preventDefault();
+    }
+    
     updateActiveCellFromEvent(e);
   };
 
@@ -120,6 +126,28 @@ export const ScratchGrid: React.FC<ScratchGridProps> = ({
     }
   };
 
+  // Add touch event passive option for better performance
+  useEffect(() => {
+    // This will help prevent scrolling while scratching on mobile
+    const preventDefaultTouchMove = (e: TouchEvent) => {
+      if (isDrawing) {
+        e.preventDefault();
+      }
+    };
+
+    // Add event listener with passive: false to allow preventDefault
+    const gridElement = gridRef.current;
+    if (gridElement) {
+      gridElement.addEventListener('touchmove', preventDefaultTouchMove, { passive: false });
+    }
+
+    return () => {
+      if (gridElement) {
+        gridElement.removeEventListener('touchmove', preventDefaultTouchMove);
+      }
+    };
+  }, [isDrawing]);
+
   return (
     <div
       ref={gridRef}
@@ -129,7 +157,8 @@ export const ScratchGrid: React.FC<ScratchGridProps> = ({
         maxWidth: "444px",
         borderRadius: "1rem",
         overflow: "hidden",
-        cursor: "url('/assets/coin.cur'), auto"
+        cursor: "url('/assets/coin.cur'), auto",
+        touchAction: "none" // Prevent scrolling when interacting with the grid
       }}
       onMouseDown={handleGridMouseDown}
       onMouseMove={handleGridMouseMove}

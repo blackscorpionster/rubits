@@ -517,10 +517,6 @@ export default function PlayPage() {
         />
 
         <div className="w-full max-w-md">
-          <p className="mb-4 text-center">
-            Scratch away to reveal the numbers!
-          </p>
-
           {notification && (
             <div className="mb-6 p-4 bg-blue-100 rounded-lg text-center text-blue-700">
               {notification}
@@ -528,18 +524,6 @@ export default function PlayPage() {
           )}
 
           <div className="flex justify-center gap-4">
-            <button
-              onClick={handleValidateGame}
-              className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-300"
-              disabled={
-                Object.keys(revealedNumbers).length === 0 ||
-                submitting ||
-                notificationState !== "none"
-              }
-            >
-              {submitting ? "Validating..." : "Validate Now"}
-            </button>
-
             {validationResult && notificationState === "none" && (
               <button
                 onClick={resetGame}
@@ -553,17 +537,19 @@ export default function PlayPage() {
           <div>
             <BuyTickets />
           </div>
-
-          <div className="mt-8">
-            <button
-              onClick={handleLogout}
-              className="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-            >
-              Logout
-            </button>
-          </div>
         </div>
       </div>
+      
+      <button
+        onClick={handleLogout}
+        className="fixed bottom-4 right-4 bg-gray-800/70 hover:bg-red-600/90 text-white rounded-full p-2 shadow-lg transition-all duration-300 hover:scale-110 border border-gray-700"
+        aria-label="Logout"
+        title="Logout"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      </button>
     </main>
   );
 }
