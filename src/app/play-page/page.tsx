@@ -218,9 +218,50 @@ export default function PlayPage() {
   const [showWinningAlert, setShowWinningAlert] = useState(false);
   const [showLosingAlert, setShowLosingAlert] = useState(false);
   const [showReadyToReveal, setShowReadyToReveal] = useState(false);
+  const [reloadTickets, setReloadTickets] = useState(true);
   const [gridKey, setGridKey] = useState<string>("initial");
   const [playerId, setPlayerId] = useState<string | null>(null);
   const router = useRouter();
+
+  const handleReloadTickets = (reloadTickets: boolean) => {
+    setReloadTickets(reloadTickets)
+  }
+
+  const fetchTicketData = async () => {
+    try {
+      setLoading(true);
+      const playerId = localStorage.getItem("playerId");
+      const response = await fetch(`/api/ticket?playerId=${encodeURIComponent(playerId ?? "")}&ticketStatus=intact`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const ticketsJson = await response.json();
+
+      if (ticketsJson?.tickets?.length > 0) {
+        const ticket = ticketsJson?.tickets[0];
+        setTicketData(ticket);
+
+        // Convert the array of numbers to the GridItem format needed by the ScratchGrid
+        const formattedGridData = createGridDataFromArray(
+          ticket.gridElements,
+          ticket.draw.gridSizeX,
+          ticket.draw.gridSizeY
+        );
+        setGridData(formattedGridData);
+      } else {
+        setTicketData(null);
+        setGridData([]);
+      }
+    } catch (err) {
+      console.error("Error fetching ticket data:", err);
+      setError("Error connecting to server");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const playerId = localStorage.getItem("playerId");
@@ -234,41 +275,17 @@ export default function PlayPage() {
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("userEmail");
+    localStorage.removeItem("playerId");
     router.push("/");
   };
 
   // Fetch ticket data from the real database API
   useEffect(() => {
-    const fetchTicketData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch("/api/ticket");
-        const ticket = await response.json();
-
-        if (ticket) {
-          setTicketData(ticket);
-
-          // Convert the array of numbers to the GridItem format needed by the ScratchGrid
-          const formattedGridData = createGridDataFromArray(
-            ticket.gridElements,
-            ticket.draw.gridSizeX,
-            ticket.draw.gridSizeY
-          );
-          setGridData(formattedGridData);
-        } else {
-          setError("No ticket found");
-        }
-      } catch (err) {
-        console.error("Error fetching ticket data:", err);
-        setError("Error connecting to server");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTicketData();
-  }, []);
+    if (reloadTickets) {
+      fetchTicketData();
+      setReloadTickets(false);
+    }
+  }, [reloadTickets]);
 
   // Convert the array of numbers to the format needed by the ScratchGrid
   const createGridDataFromArray = (
@@ -358,33 +375,7 @@ export default function PlayPage() {
   const resetGame = () => {
     setRevealedNumbers({});
     setValidationResult(null);
-    // Fetch a new ticket from the database
-    const fetchNewTicket = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch("/api/ticket");
-        const ticket = await response.json();
-
-        if (ticket) {
-          setTicketData(ticket);
-          const formattedGridData = createGridDataFromArray(
-            ticket.gridElements,
-            ticket.draw.gridSizeX,
-            ticket.draw.gridSizeY
-          );
-          setGridData(formattedGridData);
-        } else {
-          setError("No ticket found");
-        }
-      } catch (err) {
-        console.error("Error fetching new ticket:", err);
-        setError("Failed to get a new ticket");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNewTicket();
+    fetchTicketData();
     setGridKey(`grid-${Date.now()}`);
   };
 
@@ -474,11 +465,13 @@ export default function PlayPage() {
           </div>
         )}
 
-        <ScratchGrid
-          key={gridKey}
-          gridData={gridData}
-          onNumberRevealed={handleNumberRevealed}
-        />
+        {ticketData &&
+          <ScratchGrid
+            key={gridKey}
+            gridData={gridData}
+            onNumberRevealed={handleNumberRevealed}
+          />
+        }
 
         <div className="w-full max-w-md">
           {notification && (
@@ -499,7 +492,7 @@ export default function PlayPage() {
           </div>
 
           <div>
-            <BuyTicketsContainer />
+            <BuyTicketsContainer setTicketsPurchased={handleReloadTickets} playerId={playerId ?? ""}/>
           </div>
         </div>
       </div>

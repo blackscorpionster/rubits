@@ -4,15 +4,15 @@ import { ErrorPopup } from "./ErrorPopup";
 interface BuyTicketsProps {
   drawId: string;
   drawName: string;
+  playerId: string;
+  setTicketsPurchased: (purchased: boolean) => void;
 }
 
-export const BuyTickets: React.FC<BuyTicketsProps> = ({ drawId, drawName }) => {
+export const BuyTickets: React.FC<BuyTicketsProps> = ({ drawId, drawName, playerId, setTicketsPurchased }) => {
   const [error, setError] = useState<string | null>(null);
 
     const handlePurchase = async (numTickets: number) => {
       try {
-        const playerId = localStorage.getItem("playerId");
-
         const response = await fetch("/api/buy-tickets", {
           method: "POST",
           headers: {
@@ -21,11 +21,14 @@ export const BuyTickets: React.FC<BuyTicketsProps> = ({ drawId, drawName }) => {
           body: JSON.stringify({ numTickets: numTickets, drawId: drawId, playerId: playerId }),
         });
 
+        // Trigger ticket api to reload tickets in src/app/play-page/page.tsx
+        setTicketsPurchased(true);
+
       if (!response.ok) {
         setError("Error purchasing tickets");
+      } else {
+        console.log(`Successfully purchased ${numTickets} ticket(s) for draw ${drawId}`);
       }
-
-      console.log(`Successfully purchased ${numTickets} ticket(s) for draw ${drawId}`);
     } catch (error) {
       console.error("Error purchasing tickets:", error);
     }
