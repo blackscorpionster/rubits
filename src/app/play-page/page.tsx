@@ -6,19 +6,30 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { playWinSound } from "../../utils/audioUtils";
 import { BuyTicketsContainer } from "./components/BuyTicketsContainer";
-import { Draw, GridItem, Ticket, ValidationResult } from "./types";
+import { Draw, GridItem, Ticket } from "./types";
 
 const ReactConfetti = dynamic(() => import("react-confetti"), {
   ssr: false,
 });
 
+interface ValidationResult {
+  success: boolean;
+  valid?: boolean;
+  won?: boolean;
+  prize?: string | null;
+  message?: string;
+  isLastTicket?: boolean;
+}
+
 // Winning notification with animation
 const WinningNotification = ({
   prize,
   onClose,
+  isLastTicket,
 }: {
   prize: string;
   onClose: () => void;
+  isLastTicket?: boolean;
 }) => {
   const [windowDimensions, setWindowDimensions] = useState({
     width: typeof window !== "undefined" ? window.innerWidth : 0,
@@ -88,7 +99,7 @@ const WinningNotification = ({
               onClick={handleClose}
               className="bg-white text-pink-600 hover:bg-yellow-200 text-xl font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
             >
-              Keep playing!
+              {isLastTicket ? "Buy More Tickets" : "Keep playing!"}
             </button>
           </div>
         </div>
@@ -152,7 +163,13 @@ const ReadyToReveal = ({ onReveal }: { onReveal: () => void }) => {
   );
 };
 
-const BetterLuckNextTime = ({ onClose }: { onClose: () => void }) => {
+const BetterLuckNextTime = ({
+  onClose,
+  isLastTicket,
+}: {
+  onClose: () => void;
+  isLastTicket?: boolean;
+}) => {
   const [exiting, setExiting] = useState(false);
 
   const handleClose = () => {
@@ -184,7 +201,7 @@ const BetterLuckNextTime = ({ onClose }: { onClose: () => void }) => {
               onClick={handleClose}
               className="bg-white text-purple-600 hover:bg-purple-100 text-xl font-bold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
             >
-              Keep playing!
+              {isLastTicket ? "Buy More Tickets" : "Keep playing!"}
             </button>
           </div>
         </div>
@@ -339,7 +356,6 @@ export default function PlayPage() {
     >
   >({});
 
-  // Single ticket state (for the current ticket)
   const [revealedNumbers, setRevealedNumbers] = useState<
     Record<string, number>
   >({});
@@ -365,7 +381,8 @@ export default function PlayPage() {
   const fetchTicketData = async () => {
     try {
       setLoading(true);
-      const playerId = typeof window !== 'undefined' ? localStorage.getItem("playerId") : null;
+      const playerId =
+        typeof window !== "undefined" ? localStorage.getItem("playerId") : null;
       const response = await fetch(
         `/api/ticket?playerId=${encodeURIComponent(
           playerId ?? ""
@@ -426,7 +443,7 @@ export default function PlayPage() {
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const playerId = localStorage.getItem("playerId");
 
       if (!playerId) {
@@ -439,7 +456,7 @@ export default function PlayPage() {
   }, [router]);
 
   const handleLogout = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.removeItem("customImage");
       localStorage.removeItem("playerId");
     }
@@ -500,12 +517,14 @@ export default function PlayPage() {
           Object.keys(currentTicketData.revealedNumbers).length >=
           currentTicketData.gridData.length;
 
-        if (allRevealed && notificationState === "none") {
+        const isScratched = currentTicket.status === "scratched";
+
+        if ((allRevealed || isScratched) && notificationState === "none") {
           console.log(
-            "All cells already revealed on navigation, showing notification"
+            "All cells already revealed on navigation or ticket marked as scratched, showing notification"
           );
           setNotificationState("readyToReveal");
-        } else if (!allRevealed) {
+        } else if (!allRevealed && !isScratched) {
           setNotificationState("none");
           setValidationResult(null);
         }
@@ -529,7 +548,6 @@ export default function PlayPage() {
     });
   };
 
-  // Handle navigation between tickets
   const goToNextTicket = () => {
     if (currentTicketIndex < tickets.length - 1) {
       // Save current ticket in local state before switching -ts
@@ -631,6 +649,10 @@ export default function PlayPage() {
         return;
       }
 
+      // Check if this is the last unscratched ticket before we mark it as scratched
+      const isLastTicket = isLastUnscratchedTicket();
+      console.log("Is this the last unscratched ticket?", isLastTicket);
+
       const currentRevealedNumbers = currentTicketData.revealedNumbers;
 
       console.log(
@@ -655,10 +677,19 @@ export default function PlayPage() {
           valid: true,
           won: isWinning,
           prize: isWinning ? `$${Math.floor(Math.random() * 100) + 10}` : null,
+          isLastTicket: isLastTicket,
         };
 
         console.log("Mock validation result:", mockResult);
         setValidationResult(mockResult);
+
+        setTickets((prev) =>
+          prev.map((ticket) =>
+            ticket.id === currentTicketId
+              ? { ...ticket, status: "scratched" }
+              : ticket
+          )
+        );
 
         if (mockResult.won) {
           setNotificationState("winning");
@@ -672,8 +703,9 @@ export default function PlayPage() {
       }
 
       // real validation for real tickets -ts
-      const playerId = typeof window !== 'undefined' ? localStorage.getItem("playerId") : null;
-      
+      const playerId =
+        typeof window !== "undefined" ? localStorage.getItem("playerId") : null;
+
       const response = await fetch("/api/validate-game", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -687,9 +719,23 @@ export default function PlayPage() {
 
       const result = await response.json();
       console.log("Validation result:", result);
-      setValidationResult(result);
+
+      const resultWithLastTicket = {
+        ...result,
+        isLastTicket: isLastTicket,
+      };
+
+      setValidationResult(resultWithLastTicket);
 
       if (result.success) {
+        setTickets((prev) =>
+          prev.map((ticket) =>
+            ticket.id === currentTicketId
+              ? { ...ticket, status: "scratched" }
+              : ticket
+          )
+        );
+
         if (result.won) {
           setNotificationState("winning");
           playWinSound();
@@ -726,17 +772,89 @@ export default function PlayPage() {
       }
     }
 
+    for (let i = 0; i < currentTicketIndex; i++) {
+      const ticketId = tickets[i].id;
+      const ticketData = ticketsData[ticketId];
+
+      if (
+        ticketData &&
+        Object.keys(ticketData.revealedNumbers).length <
+          ticketData.gridData.length
+      ) {
+        return i;
+      }
+    }
+
     return null;
+  };
+
+  const isLastUnscratchedTicket = (): boolean => {
+    let unscratchedCount = 0;
+
+    for (let i = 0; i < tickets.length; i++) {
+      const ticketId = tickets[i].id;
+      const ticket = tickets[i];
+      const ticketDataInfo = ticketsData[ticketId];
+
+      if (
+        ticketDataInfo &&
+        ticket.status !== "scratched" &&
+        Object.keys(ticketDataInfo.revealedNumbers).length <
+          ticketDataInfo.gridData.length
+      ) {
+        unscratchedCount++;
+
+        if (unscratchedCount > 1) {
+          return false;
+        }
+      }
+    }
+
+    if (unscratchedCount === 1 && ticketData) {
+      const currentTicketDataInfo = ticketsData[ticketData.id];
+      return (
+        ticketData.status !== "scratched" &&
+        currentTicketDataInfo &&
+        Object.keys(currentTicketDataInfo.revealedNumbers).length <
+          currentTicketDataInfo.gridData.length
+      );
+    }
+
+    return false;
   };
 
   const handleGameReset = () => {
     setNotificationState("none");
-    resetGame();
+
+    if (validationResult?.isLastTicket) {
+      setTickets([]);
+      setTicketData(null);
+      setGridData([]);
+      setTicketsData({});
+
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
+      return;
+    }
+
+    // Otherwise, find the next ticket as normal
+    const nextTicketIndex = findNextUnscratchedTicketIndex();
+
+    if (nextTicketIndex !== null) {
+      setCurrentTicketIndex(nextTicketIndex);
+      resetCurrentTicket();
+    } else {
+      // This is a fallback - we should never reach here if isLastTicket is working correctly
+      setTickets([]);
+      setTicketData(null);
+      setGridData([]);
+      setTicketsData({});
+      setReloadTickets(true);
+    }
   };
 
-  const resetGame = () => {
-    setReloadTickets(true);
-
+  const resetCurrentTicket = () => {
     if (!ticketData) return;
 
     const ticketId = ticketData.id;
@@ -762,7 +880,6 @@ export default function PlayPage() {
     });
   };
 
-  // Function to dismiss notification
   const dismissNotification = () => {
     setNotification(null);
   };
@@ -815,7 +932,8 @@ export default function PlayPage() {
     );
   }
 
-  const customImage = typeof window !== 'undefined' ? localStorage.getItem("customImage") : null;
+  const customImage =
+    typeof window !== "undefined" ? localStorage.getItem("customImage") : null;
   const imageUrl = customImage ? "data:image/png;base64," + customImage : "";
   return (
     <main
@@ -832,11 +950,15 @@ export default function PlayPage() {
         <WinningNotification
           prize={validationResult.prize}
           onClose={handleGameReset}
+          isLastTicket={validationResult.isLastTicket}
         />
       )}
 
       {notificationState === "losing" && (
-        <BetterLuckNextTime onClose={handleGameReset} />
+        <BetterLuckNextTime
+          onClose={handleGameReset}
+          isLastTicket={validationResult?.isLastTicket}
+        />
       )}
 
       {tickets.length > 1 && (
@@ -854,7 +976,6 @@ export default function PlayPage() {
           Jumbo's JumBucks
         </h1>
 
-        {/* Only show errors that aren't related to mock tickets */}
         {error && !error.includes("Invalid ticket") && (
           <p className="text-red-500 mb-4">{error}</p>
         )}
