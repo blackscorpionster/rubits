@@ -8,6 +8,7 @@ interface ExternalDrawingProps {
   lastPosition: MutableRef<CanvasPosition>;
   updateScratchedArea: (x: number, y: number) => void;
   drawScratchLine: (from: CanvasPosition, to: CanvasPosition) => void;
+  forceReveal: () => void;
 }
 
 export const useExternalDrawingControl = ({
@@ -17,20 +18,36 @@ export const useExternalDrawingControl = ({
   lastPosition,
   updateScratchedArea,
   drawScratchLine,
+  forceReveal,
 }: ExternalDrawingProps) => {
-  useImperativeHandle(ref, () => ({
-    startDrawingExternal: (x: number, y: number) => {
-      if (!canvasInitialized) return;
-      isDrawing.current = true;
-      lastPosition.current = { x, y };
-      updateScratchedArea(x, y);
-    },
-    drawExternal: (x: number, y: number) => {
-      if (!isDrawing.current || !canvasInitialized) return;
+  useImperativeHandle(
+    ref,
+    () => ({
+      startDrawingExternal: (x: number, y: number) => {
+        if (!canvasInitialized) return;
+        isDrawing.current = true;
+        lastPosition.current = { x, y };
+        updateScratchedArea(x, y);
+      },
+      drawExternal: (x: number, y: number) => {
+        if (!isDrawing.current || !canvasInitialized) return;
 
-      const currentPosition = { x, y };
-      drawScratchLine(lastPosition.current, currentPosition);
-      lastPosition.current = currentPosition;
-    },
-  }));
+        const currentPosition = { x, y };
+        drawScratchLine(lastPosition.current, currentPosition);
+        lastPosition.current = currentPosition;
+      },
+      forceReveal: () => {
+        if (!canvasInitialized) return;
+        forceReveal();
+      },
+    }),
+    [
+      canvasInitialized,
+      isDrawing,
+      lastPosition,
+      updateScratchedArea,
+      drawScratchLine,
+      forceReveal,
+    ]
+  );
 };

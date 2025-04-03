@@ -9,37 +9,43 @@ interface BuyTicketsProps {
 export const BuyTickets: React.FC<BuyTicketsProps> = ({ drawId, drawName }) => {
   const [error, setError] = useState<string | null>(null);
 
-    const handlePurchase = async (numTickets: number) => {
-      try {
-        const playerId = localStorage.getItem("playerId");
+  const handlePurchase = async (numTickets: number) => {
+    try {
+      const playerId = localStorage.getItem("playerId");
 
-        const response = await fetch("/api/buy-tickets", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ numTickets: numTickets, drawId: drawId, playerId: playerId }),
-        });
+      const response = await fetch("/api/buy-tickets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          numTickets: numTickets,
+          drawId: drawId,
+          playerId: playerId,
+        }),
+      });
 
       if (!response.ok) {
         setError("Error purchasing tickets");
       }
 
-      console.log(`Successfully purchased ${numTickets} ticket(s) for draw ${drawId}`);
+      console.log(
+        `Successfully purchased ${numTickets} ticket(s) for draw ${drawId}`
+      );
     } catch (error) {
       console.error("Error purchasing tickets:", error);
     }
-    };
+  };
 
   const buyTicketOptions = [1, 3, 5];
 
-    return (
-      <div>
-        <div className="flex flex-col items-center justify-center h-full text-center mt-3 mb-5">
-          <p className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-pink-400 mb-3 rotate-1 transform animate-pulse-fast">
-            🎮 Feeling lucky? More chances to win big with {drawName}! 🎮
-          </p>
-          <div className="flex space-x-3">
+  return (
+    <div>
+      <div className="flex flex-col items-center justify-center h-full text-center mt-3 mb-5">
+        <p className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-pink-400 mb-3 rotate-1 transform animate-pulse-fast">
+          🎮 Feeling lucky? More chances to win big with {drawName}! 🎮
+        </p>
+        <div className="flex space-x-3">
           {buyTicketOptions.map((num, index) => (
             <button
               key={num}
@@ -56,10 +62,10 @@ export const BuyTickets: React.FC<BuyTicketsProps> = ({ drawId, drawName }) => {
               </span>
               <span className="absolute inset-0 bg-white/20 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300"></span>
             </button>
-            ))}
-          </div>
+          ))}
         </div>
-        {error && <ErrorPopup message={error} onClose={() => setError("")} />}
       </div>
-    );
-  };
+      {error && <ErrorPopup message={error} onClose={() => setError("")} />}
+    </div>
+  );
+};

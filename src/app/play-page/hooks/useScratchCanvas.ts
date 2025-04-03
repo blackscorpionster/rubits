@@ -139,6 +139,36 @@ export const useScratchCanvas = ({
     saveCanvasState();
   };
 
+  // Function to force complete reveal
+  const forceReveal = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || isRevealed) return;
+    
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Clear the entire canvas to reveal the number
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Mark all grid cells as scratched
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        scratchGrid.current[y][x] = true;
+      }
+    }
+    
+    setPercentScratched(100);
+    
+    // Only trigger the onRevealed callback if not already revealed
+    if (!isRevealed) {
+      setIsRevealed(true);
+      onRevealed();
+    }
+    
+    // Save the fully revealed state
+    saveCanvasState();
+  };
+
   const drawScratchLine = (from: CanvasPosition, to: CanvasPosition) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -222,5 +252,6 @@ export const useScratchCanvas = ({
     initCanvas,
     updateScratchedArea,
     drawScratchLine,
+    forceReveal,
   };
 };
