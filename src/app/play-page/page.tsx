@@ -213,7 +213,7 @@ const NavigationArrows = ({
   disabled: boolean;
 }) => {
   return (
-    <div className="fixed inset-y-0 left-0 right-0 pointer-events-none flex items-center justify-between px-4 z-30">
+    <div className="fixed inset-y-0 left-0 right-0 pointer-events-none flex items-center justify-between px-2 z-30">
       <button
         onClick={onPrev}
         className={`pointer-events-auto p-3 rounded-full bg-white/80 shadow-lg hover:bg-white transition-all duration-300 transform ${
@@ -226,7 +226,7 @@ const NavigationArrows = ({
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6 text-gray-800"
+          className="h-5 w-5 text-gray-800"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -251,7 +251,7 @@ const NavigationArrows = ({
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6 text-gray-800"
+          className="h-5 w-5 text-gray-800"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
