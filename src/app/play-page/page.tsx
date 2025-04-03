@@ -964,7 +964,7 @@ export default function PlayPage() {
           )}
 
           <div>
-            <BuyTicketsContainer setTicketsPurchased={handleReloadTickets} playerId={playerId ?? ""}/>
+            <BuyTicketsContainer setTicketsPurchased={handleReloadTickets} />
           </div>
         </div>
       </div>

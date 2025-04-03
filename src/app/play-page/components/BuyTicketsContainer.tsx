@@ -3,11 +3,10 @@ import { BuyTickets } from "./BuyTickets";
 import { Draw } from "../types";
 
 interface BuyTicketsContainerProps {
-    playerId: string;
     setTicketsPurchased: (purchased: boolean) => void;
 }
 
-export const BuyTicketsContainer: React.FC<BuyTicketsContainerProps> = ({ playerId, setTicketsPurchased }) => {
+export const BuyTicketsContainer: React.FC<BuyTicketsContainerProps> = ({ setTicketsPurchased }) => {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [draws, setDraws] = useState<Draw[]>([]);
@@ -38,7 +37,7 @@ export const BuyTicketsContainer: React.FC<BuyTicketsContainerProps> = ({ player
             {!loading &&
                 !error &&
                 draws.map((draw) => (
-                    <BuyTickets key={draw.id} drawId={draw.id} drawName={draw.name} setTicketsPurchased={setTicketsPurchased} playerId={playerId} />
+                    <BuyTickets key={draw.id} drawId={draw.id} drawName={draw.name} setTicketsPurchased={setTicketsPurchased} />
                 ))}
         </div>
     );
