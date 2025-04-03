@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Ticket } from "../../play-page/types";
+import prisma from "../../../../lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
