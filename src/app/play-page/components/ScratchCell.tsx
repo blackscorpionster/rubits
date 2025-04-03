@@ -89,8 +89,8 @@ export const ScratchCell = forwardRef<ScratchCellRef, ScratchCellProps>(
             style={{
               textShadow:
                 "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000",
-              color: "#FF3E7F",
-              border: "2px solid #FF3E7F",
+              color: "#FE80D3",
+              border: "2px solid #FE80D3",
             }}
           >
             {value}
