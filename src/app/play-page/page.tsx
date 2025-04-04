@@ -994,6 +994,15 @@ export default function PlayPage() {
               onNumberRevealed={handleNumberRevealed}
             />
 
+            {/* Draw Sold Out Notification */}
+            <div className="mt-4 mb-6 bg-gradient-to-r from-orange-400 via-red-500 to-purple-500 text-white font-bold text-lg md:text-xl px-4 py-3 rounded-lg shadow-xl border-2 border-orange-300 transform -rotate-1 scale-100 animate-pulse">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-2xl">🔥</span>
+                <span className="text-center font-lacquer tracking-wider">Draw 1 sold out!</span>
+                <span className="text-2xl">🔥</span>
+              </div>
+            </div>
+
             {tickets.length > 1 && (
               <NavigationArrows
                 onPrev={goToPrevTicket}
