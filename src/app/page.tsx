@@ -21,16 +21,16 @@ const Home: React.FC = () => {
 		}
 
 		try {
-			const response = await fetch('/api/generate-image', {
-				method: 'POST',
+			const response = await fetch("/api/generate-image", {
+				method: "POST",
 				headers: {
-					'Content-Type': 'application/json',
+					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({ prompt }),
 			});
 
 			if (!response.ok) {
-				throw new Error('Failed to generate image');
+				throw new Error("Failed to generate image");
 			}
 
 			const data = await response.json();
@@ -83,9 +83,9 @@ const Home: React.FC = () => {
 				player = await response.json();
 			}
 
-			if (typeof window !== 'undefined') {
+			if (typeof window !== "undefined") {
 				localStorage.setItem("playerId", player.id);
-				
+
 				try {
 					const base64Image = await generateImage(aiPrompt);
 					if (base64Image) {
@@ -130,12 +130,12 @@ const Home: React.FC = () => {
 							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 						/>
 						<label htmlFor="email" className="block text-sm font-medium mb-2">
-							Customise your ticket by telling us about something you like
+							Customise your tickets by typing in something fun:
 						</label>
 						<textarea
 							id="aiprompt"
 							name="aiprompt"
-							placeholder="e.g. I like dogs, I like cats, I like pizza"
+							placeholder="e.g. A dragon wearing a christmas hat"
 							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 							rows={4}
 							cols={50}
