@@ -82,10 +82,15 @@ export const BuyTickets: React.FC<BuyTicketsProps> = ({
             </div>
           </>
         ) : (
-          <p className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500 mb-3 rotate-1 transform">
-            🔒 {drawName} tickets are sold out! Check back soon for new draws!
-            🔒
-          </p>
+          <div className="bg-gradient-to-r from-orange-400 via-red-500 to-purple-500 text-white font-bold text-lg md:text-xl px-4 py-3 rounded-lg shadow-xl border-2 border-orange-300 transform -rotate-1 scale-100 animate-pulse">
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-2xl">🔥</span>
+              <span className="text-center font-lacquer tracking-wider">
+                {drawName} sold out!
+              </span>
+              <span className="text-2xl">🔥</span>
+            </div>
+          </div>
         )}
       </div>
       {error && <ErrorPopup message={error} onClose={() => setError("")} />}
