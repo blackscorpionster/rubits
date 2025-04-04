@@ -130,7 +130,7 @@ const Home: React.FC = () => {
 							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 						/>
 						<label htmlFor="email" className="block text-sm font-medium mb-2">
-							Customise your tickets by typing in something fun:
+							Customise your tickets overlay with something fun:
 						</label>
 						<textarea
 							id="aiprompt"
