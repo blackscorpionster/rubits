@@ -230,7 +230,7 @@ const NavigationArrows = ({
   disabled: boolean;
 }) => {
   return (
-    <div className="fixed inset-y-0 left-0 right-0 pointer-events-none flex items-center justify-between px-1 z-30">
+    <div className="absolute inset-y-0 left-0 right-0 pointer-events-none flex items-center justify-between px-0 -mx-6 z-30">
       <button
         onClick={onPrev}
         className={`pointer-events-auto p-3 rounded-full bg-white/80 shadow-lg hover:bg-white transition-all duration-300 transform ${
@@ -243,7 +243,7 @@ const NavigationArrows = ({
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4 text-gray-800"
+          className="h-3 w-3 text-gray-800"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -268,7 +268,7 @@ const NavigationArrows = ({
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4 text-gray-800"
+          className="h-3 w-3 text-gray-800"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -974,16 +974,6 @@ export default function PlayPage() {
         />
       )}
 
-      {tickets.length > 1 && (
-        <NavigationArrows
-          onPrev={goToPrevTicket}
-          onNext={goToNextTicket}
-          hasPrev={currentTicketIndex > 0}
-          hasNext={currentTicketIndex < tickets.length - 1}
-          disabled={notificationState !== "none"}
-        />
-      )}
-
       <div className="z-10 max-w-5xl w-full flex flex-col items-center gap-4">
         <h1 className="font-lacquer text-4xl md:text-5xl font-normal text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 transform rotate-1 tracking-wider shadow-lg">
           Jumbo's JumBucks
@@ -996,12 +986,24 @@ export default function PlayPage() {
         {tickets.length === 0 && <NoTickets />}
 
         {tickets.length > 0 && (
-          <TicketCarousel
-            tickets={tickets}
-            currentIndex={currentTicketIndex}
-            ticketsData={ticketsData}
-            onNumberRevealed={handleNumberRevealed}
-          />
+          <div className="relative w-full">
+            <TicketCarousel
+              tickets={tickets}
+              currentIndex={currentTicketIndex}
+              ticketsData={ticketsData}
+              onNumberRevealed={handleNumberRevealed}
+            />
+
+            {tickets.length > 1 && (
+              <NavigationArrows
+                onPrev={goToPrevTicket}
+                onNext={goToNextTicket}
+                hasPrev={currentTicketIndex > 0}
+                hasNext={currentTicketIndex < tickets.length - 1}
+                disabled={notificationState !== "none"}
+              />
+            )}
+          </div>
         )}
 
         <div className="w-full max-w-md">
